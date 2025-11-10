@@ -15,7 +15,8 @@ type FavoriteFormProps = {
     category: string;
     tags?: string[];
   };
-};\n
+};
+
 const DEFAULT_ICONS = [
   '🌐', '📺', '🎵', '🎮', '📚', '📱', '💻', '🎬',
   '🎧', '🎨', '📊', '📡', '🔍', '💡', '🎯', '✨'

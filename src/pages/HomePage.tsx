@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, AnimateSharedLayout } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FavoritesGrid } from '../components/favorites/FavoritesGrid';
 import { AddFavoriteModal } from '../components/favorites/AddFavoriteModal';
 import { SearchBar } from '../components/SearchBar';
@@ -155,7 +155,7 @@ export const HomePage: React.FC = () => {
 
       {/* Bouton de retour en haut */}
       <AnimatePresence>
-        {showScroll && (
+        {showScrollButton && (
           <motion.button
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
