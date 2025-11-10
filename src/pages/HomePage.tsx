@@ -43,12 +43,19 @@ export const HomePage: React.FC = () => {
         transition={{ duration: 0.5 }}
         className="mb-8"
       >
-        <h1 className="text-3xl font-bold mb-2 dark:text-white text-center md:text-left">
-          Bienvenue sur votre portail
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300 text-center md:text-left">
-          Accédez rapidement à vos sites préférés
-        </p>
+        <div className="bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-400 rounded-2xl p-8 shadow-2xl">
+          <h1 className="text-4xl md:text-5xl font-bold mb-3 text-white text-center">
+            🚗 XPeng Media Hub
+          </h1>
+          <p className="text-blue-50 text-lg text-center">
+            Votre portail de divertissement intelligent
+          </p>
+          <div className="mt-4 flex justify-center gap-3 text-sm text-blue-100">
+            <span className="bg-white/20 px-3 py-1 rounded-full">🎬 Vidéos</span>
+            <span className="bg-white/20 px-3 py-1 rounded-full">🎵 Musique</span>
+            <span className="bg-white/20 px-3 py-1 rounded-full">🎮 Jeux</span>
+          </div>
+        </div>
       </motion.div>
 
       {/* Barre de recherche */}
