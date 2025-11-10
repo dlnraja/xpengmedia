@@ -85,33 +85,6 @@ export const HomePage: React.FC = () => {
   };
 
   const currentTheme = themeStyles[theme];
-      // Recharger la page pour afficher les favoris par défaut
-      window.location.reload();
-    }
-  }, []);
-
-  // Gestion du bouton de retour en haut
-  const [showScroll, setShowScroll] = useState(false);
-
-  useEffect(() => {
-    const checkScroll = () => {
-      if (window.scrollY > 300) {
-        setShowScroll(true);
-      } else {
-        setShowScroll(false);
-      }
-    };
-
-    window.addEventListener('scroll', checkScroll);
-    return () => window.removeEventListener('scroll', checkScroll);
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
-  };
 
   return (
     <div className="container mx-auto px-4 py-6 pb-20">
