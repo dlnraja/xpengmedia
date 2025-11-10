@@ -1,0 +1,226 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, AnimateSharedLayout } from 'framer-motion';
+import { FavoritesGrid } from '../components/favorites/FavoritesGrid';
+import { AddFavoriteModal } from '../components/favorites/AddFavoriteModal';
+import { SearchBar } from '../components/SearchBar';
+import { useFavorites } from '../context/FavoritesContext';
+import { useTheme } from '../context/ThemeContext';
+import { PlusIcon, ArrowUpIcon, XMarkIcon, StarIcon, ClockIcon, FireIcon } from '@heroicons/react/24/outline';
+import { FiSearch, FiX, FiGlobe, FiClock, FiTrendingUp, FiFilter } from 'react-icons/fi';
+
+export const HomePage: React.FC = () => {
+  const { categories, currentCountry, getCurrentCountry } = useFavorites();
+  const { theme } = useTheme();
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Gestion du défilement pour afficher le bouton de retour en haut
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollButton(true);
+      } else {
+        setShowScrollButton(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Faire défiler vers le haut
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  // Filtrer les catégories en fonction de la recherche
+  const filteredCategories = categories.filter(category => 
+    category.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Effet pour gérer le focus sur la barre de recherche avec le raccourci Ctrl+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (e.key === 'Escape') {
+        setSearchQuery('');
+        searchInputRef.current?.blur();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Obtenir les informations sur le pays actuel
+  const currentCountryData = getCurrentCountry();
+
+  // Styles pour le thème
+  const themeStyles = {
+    light: {
+      bg: 'bg-gray-50',
+      card: 'bg-white',
+      text: 'text-gray-800',
+      border: 'border-gray-200',
+      hover: 'hover:bg-gray-100',
+      active: 'bg-gray-200',
+    },
+    dark: {
+      bg: 'bg-gray-900',
+      card: 'bg-gray-800',
+      text: 'text-gray-100',
+      border: 'border-gray-700',
+      hover: 'hover:bg-gray-700',
+      active: 'bg-gray-600',
+    },
+  };
+
+  const currentTheme = themeStyles[theme];
+      // Recharger la page pour afficher les favoris par défaut
+      window.location.reload();
+    }
+  }, []);
+
+  // Gestion du bouton de retour en haut
+  const [showScroll, setShowScroll] = useState(false);
+
+  useEffect(() => {
+    const checkScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScroll(true);
+      } else {
+        setShowScroll(false);
+      }
+    };
+
+    window.addEventListener('scroll', checkScroll);
+    return () => window.removeEventListener('scroll', checkScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-6 pb-20">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-8"
+      >
+        <h1 className="text-3xl font-bold mb-2 dark:text-white text-center md:text-left">
+          Bienvenue sur votre portail
+        </h1>
+        <p className="text-gray-600 dark:text-gray-300 text-center md:text-left">
+          Accédez rapidement à vos sites préférés
+        </p>
+      </motion.div>
+
+      {/* Barre de recherche */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="mb-8"
+      >
+        <SearchBar />
+      </motion.div>
+
+      {/* Bouton flottant d'ajout */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => {
+          setSelectedCategory('');
+          setIsAddModalOpen(true);
+        }}
+        className="fixed bottom-6 right-6 z-10 flex items-center justify-center w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg hover:bg-primary-700 transition-colors md:hidden"
+        aria-label="Ajouter un favori"
+      >
+        <PlusIcon className="h-6 w-6" />
+      </motion.button>
+
+      {/* Bouton de retour en haut */}
+      <AnimatePresence>
+        {showScroll && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0 }}
+            onClick={scrollToTop}
+            className="fixed bottom-6 left-6 z-10 flex items-center justify-center w-12 h-12 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded-full shadow-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+            aria-label="Retour en haut"
+          >
+            <ArrowUpIcon className="h-5 w-5" />
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      {/* Bouton d'ajout pour desktop */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="hidden md:block mb-8"
+      >
+        <button
+          onClick={() => {
+            setSelectedCategory('');
+            setIsAddModalOpen(true);
+          }}
+          className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          <PlusIcon className="h-5 w-5 mr-2" />
+          Ajouter un favori
+        </button>
+      </motion.div>
+
+      {/* Afficher les favoris par catégorie */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+        className="space-y-12"
+      >
+        <AnimatePresence>
+          {categories.map((category, index) => (
+            <motion.div
+              key={category}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 * (index % 3) }}
+            >
+              <FavoritesGrid
+                category={category}
+                onAddClick={() => {
+                  setSelectedCategory(category);
+                  setIsAddModalOpen(true);
+                }}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </motion.div>
+
+      {/* Modal d'ajout de favori */}
+      <AddFavoriteModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        defaultCategory={selectedCategory}
+      />
+    </div>
+  );
+};
