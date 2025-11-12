@@ -26,7 +26,12 @@ export const LocaleSelector: React.FC = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current && 
+        !dropdownRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -41,6 +46,7 @@ export const LocaleSelector: React.FC = () => {
   }, [isOpen]);
 
   const handleSelect = (regionCode: string, language: string) => {
+    console.log('LocaleSelector: Changing to', { region: regionCode, language });
     setLocale({ region: regionCode as any, language });
     setIsOpen(false);
   };
@@ -118,7 +124,10 @@ export const LocaleSelector: React.FC = () => {
     <>
       <button
         ref={buttonRef}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
         className="flex items-center gap-2 rounded-full border border-slate-300/70 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-cyan-400 hover:bg-white hover:shadow-md dark:border-slate-700/70 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:bg-slate-800"
       >
         <span className="text-xl" aria-hidden="true">{currentRegion.flag}</span>

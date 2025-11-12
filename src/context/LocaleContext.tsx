@@ -302,13 +302,19 @@ export const LocaleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   }, [locale]);
 
   const setLocale = (newLocale: Locale) => {
+    console.log('LocaleContext: Setting new locale', newLocale);
     setLocaleState(newLocale);
   };
 
   // Fonction de traduction
   const t = (key: string): string => {
     const lang = locale.language;
-    return translations[lang]?.[key] || translations['en']?.[key] || key;
+    const translation = translations[lang]?.[key] || translations['en']?.[key] || key;
+    // Debug: log seulement les clés importantes
+    if (key === 'home' || key === 'selectRegion') {
+      console.log(`t("${key}") with lang=${lang} =>`, translation);
+    }
+    return translation;
   };
 
   return (
