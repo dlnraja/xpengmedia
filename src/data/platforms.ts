@@ -498,6 +498,15 @@ export const videoCategories: PlatformCategory[] = [
         tags: ['Belgique', 'Gratuit'],
       },
       {
+        id: 'rtlplay',
+        name: 'RTL Play',
+        description: 'Streaming belge RTL avec séries, films et direct.',
+        url: 'https://www.rtlplay.be/',
+        icon: '📺',
+        availability: ['europe'],
+        tags: ['Belgique', 'Gratuit'],
+      },
+      {
         id: 'pickx',
         name: 'Pickx',
         description: 'Streaming TV belge avec de nombreuses chaînes.',
