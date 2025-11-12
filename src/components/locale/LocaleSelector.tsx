@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocale } from '../../context/LocaleContext';
 import { ChevronDownIcon, CheckIcon } from '@heroicons/react/24/outline';
@@ -6,9 +7,22 @@ import { ChevronDownIcon, CheckIcon } from '@heroicons/react/24/outline';
 export const LocaleSelector: React.FC = () => {
   const { locale, setLocale, availableRegions } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
+  const [buttonPosition, setButtonPosition] = useState({ top: 0, right: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const currentRegion = availableRegions.find(r => r.code === locale.region) || availableRegions[0] || { code: 'global' as any, name: 'Global', flag: '🌍', language: 'en' };
+
+  // Calculer la position du bouton
+  useEffect(() => {
+    if (isOpen && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setButtonPosition({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -31,21 +45,8 @@ export const LocaleSelector: React.FC = () => {
     setIsOpen(false);
   };
 
-  return (
-    <div ref={dropdownRef} className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-full border border-slate-300/70 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-cyan-400 hover:bg-white hover:shadow-md dark:border-slate-700/70 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:bg-slate-800"
-      >
-        <span className="text-xl" aria-hidden="true">{currentRegion.flag}</span>
-        <span className="hidden sm:inline">{currentRegion.name}</span>
-        <ChevronDownIcon 
-          className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
-        />
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
+  // Rendre le dropdown dans un portail
+  const dropdownContent = isOpen && (
           <>
             {/* Overlay pour bloquer les interactions */}
             <motion.div
@@ -64,14 +65,15 @@ export const LocaleSelector: React.FC = () => {
             
             {/* Menu déroulant */}
             <motion.div
+              ref={dropdownRef}
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
               transition={{ duration: 0.2 }}
               style={{ 
                 position: 'fixed',
-                right: '1rem',
-                top: '6rem',
+                top: `${buttonPosition.top}px`,
+                right: `${buttonPosition.right}px`,
                 zIndex: 2147483647,
                 maxHeight: '80vh',
               }}
@@ -117,8 +119,28 @@ export const LocaleSelector: React.FC = () => {
             </div>
           </motion.div>
           </>
-        )}
-      </AnimatePresence>
-    </div>
+  );
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 rounded-full border border-slate-300/70 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-cyan-400 hover:bg-white hover:shadow-md dark:border-slate-700/70 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:bg-slate-800"
+      >
+        <span className="text-xl" aria-hidden="true">{currentRegion.flag}</span>
+        <span className="hidden sm:inline">{currentRegion.name}</span>
+        <ChevronDownIcon 
+          className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+        />
+      </button>
+
+      {dropdownContent && createPortal(
+        <AnimatePresence>
+          {dropdownContent}
+        </AnimatePresence>,
+        document.body
+      )}
+    </>
   );
 };
