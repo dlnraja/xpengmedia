@@ -46,13 +46,26 @@ export const LocaleSelector: React.FC = () => {
 
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="fixed right-4 top-24 z-[9999] w-72 rounded-2xl border border-cyan-500/30 bg-white/98 shadow-[0_0_40px_rgba(6,182,212,0.3)] backdrop-blur-2xl dark:border-cyan-500/40 dark:bg-slate-900/98"
-          >
+          <>
+            {/* Overlay pour bloquer les interactions */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm"
+              style={{ zIndex: 99998 }}
+            />
+            
+            {/* Menu déroulant */}
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              style={{ zIndex: 99999 }}
+              className="fixed right-4 top-24 w-72 rounded-2xl border-2 border-cyan-500/40 bg-white shadow-[0_0_60px_rgba(6,182,212,0.4)] backdrop-blur-2xl dark:border-cyan-500/50 dark:bg-slate-900"
+            >
             <div className="p-2">
               <div className="mb-2 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 Sélectionner la région
@@ -92,6 +105,7 @@ export const LocaleSelector: React.FC = () => {
               </div>
             </div>
           </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
