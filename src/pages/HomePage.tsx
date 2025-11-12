@@ -15,6 +15,7 @@ import { useLocale } from '../context/LocaleContext';
 import { AddServiceButton } from '../components/ui/AddServiceButton';
 import { AddUrlButton } from '../components/ui/AddUrlButton';
 import { AddCustomUrlModal } from '../components/modals/AddCustomUrlModal';
+import { AddServiceFromListModal } from '../components/modals/AddServiceFromListModal';
 import { StarIcon } from '@heroicons/react/24/solid';
 import { PlatformIcon } from '../components/icons/PlatformIcon';
 
@@ -23,6 +24,7 @@ export const HomePage: React.FC = () => {
   const { locale, t } = useLocale();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCustomUrlModalOpen, setIsCustomUrlModalOpen] = useState(false);
+  const [isServiceListModalOpen, setIsServiceListModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -322,7 +324,7 @@ export const HomePage: React.FC = () => {
           
           {/* Bouton Ajouter un service */}
           <AddServiceButton 
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={() => setIsServiceListModalOpen(true)}
             label="Service"
           />
           
@@ -653,6 +655,13 @@ export const HomePage: React.FC = () => {
         isOpen={isCustomUrlModalOpen}
         onClose={() => setIsCustomUrlModalOpen(false)}
         onAdd={handleAddCustomUrl}
+      />
+
+      {/* Modal de sélection de service depuis la liste */}
+      <AddServiceFromListModal
+        isOpen={isServiceListModalOpen}
+        onClose={() => setIsServiceListModalOpen(false)}
+        availableServices={allPlatforms}
       />
     </div>
   );
