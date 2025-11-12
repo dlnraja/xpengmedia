@@ -99,18 +99,20 @@ export const EditablePlatformCard: React.FC<EditablePlatformCardProps> = ({
             onMouseLeave={handleMouseUp}
             whileHover={!showRemove ? { scale: 1.05 } : {}}
             whileTap={!showRemove ? { scale: 0.95 } : {}}
-            className={`group flex flex-col items-center gap-2 rounded-2xl border border-slate-200/70 bg-white/80 p-4 shadow-sm backdrop-blur-xl transition-all dark:border-slate-800 dark:bg-slate-900/70 ${
+            className={`group relative flex flex-col items-center gap-0.5 rounded-lg border border-slate-200/70 bg-white/80 p-1.5 shadow-sm backdrop-blur-xl transition-all dark:border-slate-800 dark:bg-slate-900/70 landscape:gap-1 landscape:p-2 md:gap-2 md:rounded-2xl md:p-4 ${
               showRemove
                 ? 'border-red-300 dark:border-red-500'
                 : 'hover:border-cyan-300 hover:shadow-md dark:hover:border-cyan-500'
             }`}
           >
-            <PlatformIcon icon={platform.icon} name={platform.name} size="md" />
-            <h3 className="text-xs font-semibold text-center text-slate-800 dark:text-white">
+            <PlatformIcon icon={platform.icon} name={platform.name} size="sm" />
+            <h3 className="text-[8px] font-semibold text-center text-slate-800 dark:text-white line-clamp-2 landscape:text-[9px] md:text-xs">
               {platform.name}
             </h3>
             {!showRemove && (
-              <ArrowTopRightOnSquareIcon className="h-3 w-3 text-slate-400 opacity-0 transition-opacity group-hover:opacity-100" />
+              <div className="absolute right-0.5 top-0.5 opacity-0 group-hover:opacity-100 transition-opacity md:right-1 md:top-1">
+                <ArrowTopRightOnSquareIcon className="h-2.5 w-2.5 text-slate-400 md:h-3 md:w-3" />
+              </div>
             )}
           </motion.a>
 
