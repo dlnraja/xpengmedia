@@ -11,24 +11,63 @@ import type { PlatformLink } from '../data/platforms';
 import { EditablePlatformCard } from '../components/platforms/EditablePlatformCard';
 import { ScrollIndicator } from '../components/ui/ScrollIndicator';
 import { useSmartFavorites } from '../hooks/useSmartFavorites';
+import { useLocale } from '../context/LocaleContext';
 import { StarIcon } from '@heroicons/react/24/solid';
 
 export const HomePage: React.FC = () => {
   const { categories } = useFavorites();
+  const { locale, t } = useLocale();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [hiddenPlatforms, setHiddenPlatforms] = useState<Set<string>>(new Set());
 
+  // Fonction de filtrage par région
+  const filterByRegion = (platforms: PlatformLink[]): PlatformLink[] => {
+    // Si région globale, afficher tous les services
+    if (locale.region === 'global') {
+      return platforms;
+    }
+
+    // Mapping des régions vers leurs availabilityScope
+    const regionMap: Record<string, string[]> = {
+      france: ['global', 'europe'],
+      germany: ['global', 'europe'],
+      spain: ['global', 'europe'],
+      italy: ['global', 'europe'],
+      netherlands: ['global', 'europe'],
+      belgium: ['global', 'europe'],
+      sweden: ['global', 'europe'],
+      norway: ['global', 'europe'],
+      denmark: ['global', 'europe'],
+      switzerland: ['global', 'europe'],
+      uk: ['global', 'europe'],
+      usa: ['global', 'north-america'],
+      china: ['global', 'china'],
+      singapore: ['global', 'asia'],
+      uae: ['global', 'middle-east'],
+      israel: ['global', 'middle-east'],
+    };
+
+    const allowedScopes = regionMap[locale.region] || ['global'];
+    
+    return platforms.filter(platform => 
+      platform.availability.some(av => allowedScopes.includes(av))
+    );
+  };
+
   // Sélection des plateformes populaires à afficher par défaut
-  const allPlatforms: PlatformLink[] = [
+  const allPlatformsRaw: PlatformLink[] = [
     ...videoCategories.flatMap(cat => cat.platforms),
     ...musicCategories.flatMap(cat => cat.platforms),
     ...gamesCategories.flatMap(cat => cat.platforms),
     ...chargingCategories.flatMap(cat => cat.platforms),
     ...otherServicesCategories.flatMap(cat => cat.platforms),
   ];
+
+  // Filtrer par région
+  const allPlatforms = filterByRegion(allPlatformsRaw);
 
   // Hook de favoris intelligents
   const { smartFavorites, trackClick, hasUsageData } = useSmartFavorites(allPlatforms);
@@ -73,9 +112,10 @@ export const HomePage: React.FC = () => {
     setHiddenPlatforms(prev => new Set([...prev, platformId]));
   };
 
-  // Filtrer les plateformes visibles
+  // Filtrer les plateformes visibles (cachées + région)
   const getVisiblePlatforms = (platforms: PlatformLink[]) => {
-    return platforms.filter(p => !hiddenPlatforms.has(p.id));
+    const filtered = filterByRegion(platforms);
+    return filtered.filter(p => !hiddenPlatforms.has(p.id));
   };
 
   // Toggle mode édition
@@ -207,12 +247,12 @@ export const HomePage: React.FC = () => {
             </div>
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white md:text-2xl">
-                {hasUsageData ? 'Mes Favoris' : 'Services Recommandés'}
+                {hasUsageData ? t('myFavorites') : t('smartRecommendations')}
               </h2>
               <p className="text-xs text-slate-600 dark:text-slate-400 md:text-sm">
                 {hasUsageData 
-                  ? 'Adaptés automatiquement à vos habitudes' 
-                  : 'Les plus populaires pour commencer'}
+                  ? t('adaptedToYou')
+                  : t('popularServices')}
               </p>
             </div>
           </div>
@@ -220,7 +260,7 @@ export const HomePage: React.FC = () => {
             <div className="flex items-center gap-2 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5">
               <div className="h-2 w-2 animate-pulse rounded-full bg-cyan-500" />
               <span className="text-xs font-semibold text-cyan-600 dark:text-cyan-400">
-                Apprentissage actif
+                {t('learningActive')}
               </span>
             </div>
           )}
@@ -264,10 +304,10 @@ export const HomePage: React.FC = () => {
             </div>
             <div>
               <h2 className="text-xl font-semibold text-slate-900 dark:text-white md:text-2xl">
-                Vidéos & Streaming
+                {t('videos')} & Streaming
               </h2>
               <p className="text-xs text-slate-600 dark:text-slate-400 md:text-sm">
-                {videoCategories.flatMap(c => c.platforms).length} services
+                {getVisiblePlatforms(videoCategories.flatMap(c => c.platforms)).length} services
               </p>
             </div>
             <Link to="/videos" className="ml-auto text-xs font-medium text-cyan-600 hover:text-cyan-700 dark:text-cyan-400 md:text-sm">
