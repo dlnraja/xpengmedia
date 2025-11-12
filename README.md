@@ -15,7 +15,7 @@
 
 ---
 
-### 214 services • 10 langues • Mode clair/sombre • 100% responsive
+### 214 services • 10 langues • 20 régions • Mode clair/sombre • 100% responsive
 
 ![XPENG Media Hub](https://img.shields.io/badge/Status-Production-brightgreen?style=flat-square)
 ![Version](https://img.shields.io/badge/Version-2.0.0-blue?style=flat-square)
@@ -180,16 +180,23 @@ xpengmedia/
 | **Global** | 🌍 | EN | 150+ universels |
 | **France** | 🇫🇷 | FR | Global + Canal+, Molotov, ADN |
 | **Deutschland** | 🇩🇪 | DE | Global + ZDF, ARD, Play Suisse |
+| **Österreich** | 🇦🇹 | DE | Global + services AT |
 | **Nederland** | 🇳🇱 | NL | Global + services NL |
+| **België/Belgique** | 🇧🇪 | NL | Global + services BE |
 | **España** | 🇪🇸 | ES | Global + services ES |
 | **Italia** | 🇮🇹 | IT | Global + services IT |
 | **Sverige** | 🇸🇪 | SV | Global + services SE |
 | **Norge** | 🇳🇴 | NO | Global + services NO |
 | **Danmark** | 🇩🇰 | DA | Global + services DK |
-| **中国 China** | 🇨🇳 | ZH | Global + Bilibili, iQIYI, Youku, WeChat |
+| **Schweiz/Suisse** | 🇨🇭 | DE | Global + Play Suisse |
+| **United Kingdom** | 🇬🇧 | EN | Global + services UK |
 | **United States** | 🇺🇸 | EN | Global + Hulu, Peacock, ESPN+ |
-| **UAE** | 🇦🇪 | AR | Global + services ME |
-| **Israel** | 🇮🇱 | HE | Global + services IL |
+| **Australia** | 🇦🇺 | EN | Global + services AU |
+| **中国 China** | 🇨🇳 | ZH | Global + Bilibili, iQIYI, Youku, WeChat |
+| **Singapore** | 🇸🇬 | EN | Global + services SG |
+| **UAE الإمارات** | 🇦🇪 | AR | Global + services ME |
+| **Qatar قطر** | 🇶🇦 | AR | Global + services QA |
+| **Israel ישראל** | 🇮🇱 | HE | Global + services IL |
 
 ---
 
@@ -264,7 +271,7 @@ Dropdown élégant avec overlay pour changer de pays/langue.
 #### 📊 Statistiques
 - **Services totaux** : 214 (+7 nets)
 - **Langues** : 10 complètes
-- **Régions** : 13 zones couvertes
+- **Régions** : 20 zones couvertes
 - **Catégories** : Vidéo, Musique, Jeux, Recharge, Services web
 
 ---

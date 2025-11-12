@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type Region = 'global' | 'france' | 'germany' | 'spain' | 'italy' | 'uk' | 'netherlands' | 'belgium' | 'sweden' | 'norway' | 'denmark' | 'switzerland' | 'usa' | 'china' | 'singapore' | 'uae' | 'israel';
+type Region = 'global' | 'france' | 'germany' | 'spain' | 'italy' | 'uk' | 'netherlands' | 'belgium' | 'sweden' | 'norway' | 'denmark' | 'switzerland' | 'austria' | 'usa' | 'australia' | 'china' | 'singapore' | 'uae' | 'qatar' | 'israel';
 
 interface Locale {
   region: Region;
@@ -34,11 +34,14 @@ const regions = [
   { code: 'norway' as Region, name: 'Norge', flag: '🇳🇴', language: 'no' },
   { code: 'denmark' as Region, name: 'Danmark', flag: '🇩🇰', language: 'da' },
   { code: 'switzerland' as Region, name: 'Schweiz / Suisse', flag: '🇨🇭', language: 'de' },
+  { code: 'austria' as Region, name: 'Österreich', flag: '🇦🇹', language: 'de' },
   { code: 'uk' as Region, name: 'United Kingdom', flag: '🇬🇧', language: 'en' },
   { code: 'usa' as Region, name: 'United States', flag: '🇺🇸', language: 'en' },
+  { code: 'australia' as Region, name: 'Australia', flag: '🇦🇺', language: 'en' },
   { code: 'china' as Region, name: '中国 China', flag: '🇨🇳', language: 'zh' },
   { code: 'singapore' as Region, name: 'Singapore', flag: '🇸🇬', language: 'en' },
   { code: 'uae' as Region, name: 'UAE الإمارات', flag: '🇦🇪', language: 'ar' },
+  { code: 'qatar' as Region, name: 'Qatar قطر', flag: '🇶🇦', language: 'ar' },
   { code: 'israel' as Region, name: 'Israel ישראל', flag: '🇮🇱', language: 'he' },
 ];
 
@@ -236,6 +239,10 @@ const detectBrowserLocale = (): Locale => {
     return { region: 'denmark', language: 'da' };
   } else if (browserLang.startsWith('zh')) {
     return { region: 'china', language: 'zh' };
+  } else if (browserLang.startsWith('ar-qa')) {
+    return { region: 'qatar', language: 'ar' };
+  } else if (browserLang.startsWith('ar-ae')) {
+    return { region: 'uae', language: 'ar' };
   } else if (browserLang.startsWith('ar')) {
     return { region: 'uae', language: 'ar' };
   } else if (browserLang.startsWith('he')) {
@@ -244,8 +251,12 @@ const detectBrowserLocale = (): Locale => {
     return { region: 'uk', language: 'en' };
   } else if (browserLang.startsWith('en-us')) {
     return { region: 'usa', language: 'en' };
+  } else if (browserLang.startsWith('en-au')) {
+    return { region: 'australia', language: 'en' };
   } else if (browserLang.startsWith('en-sg')) {
     return { region: 'singapore', language: 'en' };
+  } else if (browserLang.startsWith('de-at')) {
+    return { region: 'austria', language: 'de' };
   }
   
   return { region: 'global', language: 'en' };
