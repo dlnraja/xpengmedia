@@ -49,7 +49,7 @@ export const HomePage: React.FC = () => {
       switzerland: ['global', 'europe'],
       uk: ['global', 'europe'],
       usa: ['global', 'north-america'],
-      china: ['global', 'china'],
+      china: ['global', 'china', 'asia'],
       singapore: ['global', 'asia'],
       uae: ['global', 'middle-east'],
       israel: ['global', 'middle-east'],
