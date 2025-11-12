@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { FavoritesProvider } from './context/FavoritesContext';
+import { LocaleProvider } from './context/LocaleContext';
 import './index.css';
 import App from './App';
 
@@ -11,9 +12,11 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HashRouter>
       <ThemeProvider>
-        <FavoritesProvider>
-          <App />
-        </FavoritesProvider>
+        <LocaleProvider>
+          <FavoritesProvider>
+            <App />
+          </FavoritesProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </HashRouter>
   </StrictMode>

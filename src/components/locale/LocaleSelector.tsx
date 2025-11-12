@@ -1,0 +1,99 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useLocale } from '../../context/LocaleContext';
+import { ChevronDownIcon, CheckIcon } from '@heroicons/react/24/outline';
+
+export const LocaleSelector: React.FC = () => {
+  const { locale, setLocale, availableRegions } = useLocale();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const currentRegion = availableRegions.find(r => r.code === locale.region) || availableRegions[0] || { code: 'global' as any, name: 'Global', flag: '🌍', language: 'en' };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const handleSelect = (regionCode: string, language: string) => {
+    setLocale({ region: regionCode as any, language });
+    setIsOpen(false);
+  };
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 rounded-full border border-slate-300/70 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-cyan-400 hover:bg-white hover:shadow-md dark:border-slate-700/70 dark:bg-slate-800/80 dark:text-slate-200 dark:hover:border-cyan-500 dark:hover:bg-slate-800"
+      >
+        <span className="text-xl" aria-hidden="true">{currentRegion.flag}</span>
+        <span className="hidden sm:inline">{currentRegion.name}</span>
+        <ChevronDownIcon 
+          className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+        />
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+            className="absolute right-0 top-full z-50 mt-2 w-64 rounded-2xl border border-slate-200/70 bg-white/95 shadow-xl backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/95"
+          >
+            <div className="p-2">
+              <div className="mb-2 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Sélectionner la région
+              </div>
+              <div className="max-h-80 space-y-1 overflow-y-auto">
+                {availableRegions.map((region) => {
+                  const isSelected = region.code === locale.region;
+                  return (
+                    <motion.button
+                      key={region.code}
+                      onClick={() => handleSelect(region.code, region.language)}
+                      whileHover={{ scale: 1.02, x: 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left transition-all ${
+                        isSelected
+                          ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-600 shadow-sm dark:text-cyan-400'
+                          : 'text-slate-700 hover:bg-slate-100/80 dark:text-slate-200 dark:hover:bg-slate-800/80'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl" aria-hidden="true">{region.flag}</span>
+                        <div>
+                          <div className="font-medium">{region.name}</div>
+                          {region.code === 'global' && (
+                            <div className="text-xs text-slate-500 dark:text-slate-400">
+                              Tous les services
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <CheckIcon className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
+                      )}
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
