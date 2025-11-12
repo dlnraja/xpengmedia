@@ -29,9 +29,9 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
 
   // Taille d'image pour logos réels (avec padding pour cohérence)
   const imageSize = {
-    sm: 'w-6 h-6',   // 24px avec padding
-    md: 'w-7 h-7',   // 28px avec padding
-    lg: 'w-9 h-9',   // 36px avec padding
+    sm: 'w-8 h-8',   // 32px avec padding
+    md: 'w-10 h-10', // 40px avec padding
+    lg: 'w-12 h-12', // 48px avec padding
   };
 
   // Détecter si c'est une URL (logo) ou un emoji
@@ -66,7 +66,7 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
             object-contain 
             transition-all 
             duration-200
-            p-1.5
+            p-0.5
           `}
           style={{
             filter: 'drop-shadow(0 1px 3px rgba(0, 0, 0, 0.15))',
