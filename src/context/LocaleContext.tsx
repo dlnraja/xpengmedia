@@ -352,9 +352,9 @@ const detectBrowserLocale = (): Locale => {
     return { region: 'uae', language: 'ar' };
   }
   
-  // Global par défaut (TOUJOURS en anglais)
-  console.log('🌍 Aucune région spécifique détectée, utilisation de Global (EN)');
-  return { region: 'global', language: 'en' };
+  // France par défaut si impossible de déterminer
+  console.log('🇫🇷 Aucune région spécifique détectée, utilisation de France (FR) par défaut');
+  return { region: 'france', language: 'fr' };
 };
 
 export const LocaleProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
