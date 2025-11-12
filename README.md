@@ -9,16 +9,15 @@
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![Vite](https://img.shields.io/badge/Vite-7.0-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
 
-**[🚀 Démo en direct](https://dlnraja.github.io/xpengmedia/)** • **[📖 Documentation](#fonctionnalités)** • **[🐛 Signaler un bug](https://github.com/dlnraja/xpengmedia/issues)** • **[💡 Proposer une fonctionnalité](https://github.com/dlnraja/xpengmedia/issues)**
+**[🚀 Démo en direct](https://dlnraja.github.io/xpengmedia/)** • **[📖 Documentation](#-documentation-complète)** • **[🐛 Signaler un bug](https://github.com/dlnraja/xpengmedia/issues)**
 
 ---
 
 ### 214 services • 10 langues • 20 régions • Mode clair/sombre • 100% responsive
 
 ![XPENG Media Hub](https://img.shields.io/badge/Status-Production-brightgreen?style=flat-square)
-![Version](https://img.shields.io/badge/Version-2.0.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/Version-2.1.0-blue?style=flat-square)
 ![Licence](https://img.shields.io/badge/Licence-MIT-yellow?style=flat-square)
 
 </div>
@@ -44,16 +43,17 @@ Inspirée de l'interface **XPENG XOS**, cette application offre une expérience 
 ## ✨ Fonctionnalités principales
 
 ### 🌍 **Multi-régional et multilingue**
-- **10 langues** : Anglais, Français, Allemand, Espagnol, Italien, Néerlandais, Suédois, Norvégien, Danois, Arabe, Hébreu, Chinois
+- **10 langues** complètes avec traduction automatique
 - **Détection automatique** de la langue et région du navigateur
-- **Filtrage intelligent** : Seuls les services disponibles dans votre région sont affichés
+- **Filtrage intelligent** : Seuls les services disponibles dans votre région
+- **Suggestions de régions** basées sur la proximité géographique
 
 ### 📺 **214 services organisés**
-- **🎬 Vidéo** : Netflix, Prime Video, Disney+, YouTube, Crunchyroll, ADN, Bilibili, etc.
-- **🎵 Musique** : Spotify, Apple Music, YouTube Music, Deezer, TIDAL, etc.
-- **🎮 Jeux** : Steam, GeForce NOW, Xbox Cloud Gaming, etc.
-- **🔋 Recharge** : ABRP, Chargemap, PlugShare, XPENG Supercharging
-- **🌐 Services web** : Gmail, Drive, Outlook, WeChat, Weibo, etc.
+- **🎬 Vidéo** : 85+ services (Netflix, Disney+, Prime Video...)
+- **🎵 Musique** : 45+ services (Spotify, Apple Music, Deezer...)
+- **🎮 Jeux** : 35+ services (Steam, GeForce NOW, Xbox Cloud...)
+- **🔋 Recharge** : 20+ services (ABRP, Chargemap, Tesla Supercharger...)
+- **🌐 Services web** : 25+ services (Gmail, Drive, WeChat...)
 
 ### 🎨 **Design XPENG**
 - **Thème clair/sombre** avec transition fluide
@@ -68,10 +68,317 @@ Inspirée de l'interface **XPENG XOS**, cette application offre une expérience 
 - **Mobile** : Touch-friendly, gestes intuitifs
 - **Desktop** : Expérience complète avec hover effects
 
-### ⭐ **Favoris intelligents**
-- **AI-powered** : Apprentissage de vos habitudes
-- **Personnalisation** : Ajout de services personnalisés
-- **Synchronisation** : localStorage persistant
+---
+
+## 🌍 Régions supportées
+
+<div align="center">
+
+### 20 régions • 6 groupes • Suggestions intelligentes
+
+</div>
+
+### **🌍 Global / International**
+- **Langue** : Anglais (EN)
+- **Services** : 150+ services universels
+- **Description** : Services accessibles partout dans le monde
+
+---
+
+### **🇪🇺 Europe de l'Ouest** (Langues latines)
+
+| Pays | Drapeau | Langues | Voisins | Services spécifiques |
+|------|---------|---------|---------|----------------------|
+| **France** | 🇫🇷 | Français | 🇧🇪 🇨🇭 🇪🇸 🇮🇹 🇩🇪 | Canal+, Molotov, France TV, RTL Play |
+| **Espagne** | 🇪🇸 | Espagnol | 🇫🇷 | Services ES |
+| **Italie** | 🇮🇹 | Italien | 🇫🇷 🇨🇭 🇦🇹 | Services IT |
+| **Belgique** | 🇧🇪 | NL + FR | 🇫🇷 🇳🇱 🇩🇪 | RTBF Auvio, RTL Play, Pickx |
+
+---
+
+### **🇪🇺 Europe du Nord** (Langues germaniques)
+
+| Pays | Drapeau | Langues | Voisins | Services spécifiques |
+|------|---------|---------|---------|----------------------|
+| **Allemagne** | 🇩🇪 | Allemand | 🇦🇹 🇨🇭 🇳🇱 🇧🇪 🇫🇷 | ARD, ZDF, RTL+, DAZN DE |
+| **Autriche** | 🇦🇹 | Allemand | 🇩🇪 🇨🇭 🇮🇹 | Services AT |
+| **Suisse** | 🇨🇭 | DE + FR + IT | 🇫🇷 🇩🇪 🇦🇹 🇮🇹 | RTS Play, Play Suisse |
+| **Pays-Bas** | 🇳🇱 | Néerlandais | 🇧🇪 🇩🇪 | Services NL |
+
+---
+
+### **🇪🇺 Europe du Nord** (Scandinavie)
+
+| Pays | Drapeau | Langues | Voisins | Services spécifiques |
+|------|---------|---------|---------|----------------------|
+| **Suède** | 🇸🇪 | Suédois | 🇳🇴 🇩🇰 | Services SE |
+| **Norvège** | 🇳🇴 | Norvégien | 🇸🇪 🇩🇰 | Services NO |
+| **Danemark** | 🇩🇰 | Danois | 🇸🇪 🇳🇴 🇩🇪 | Services DK |
+
+---
+
+### **🌎 Pays anglophones**
+
+| Pays | Drapeau | Langues | Voisins | Services spécifiques |
+|------|---------|---------|---------|----------------------|
+| **Royaume-Uni** | 🇬🇧 | Anglais | - | BBC iPlayer, Channel 4, ITV Hub |
+| **États-Unis** | 🇺🇸 | Anglais | - | Hulu, Peacock, ESPN+, HBO Max |
+| **Australie** | 🇦🇺 | Anglais | - | Stan, 9Now, 10 Play, ABC iView |
+| **Singapour** | 🇸🇬 | EN + ZH | 🇨🇳 | Services SG + Asie |
+
+---
+
+### **🌏 Moyen-Orient**
+
+| Pays | Drapeau | Langues | Voisins | Services spécifiques |
+|------|---------|---------|---------|----------------------|
+| **Émirats Arabes Unis** | 🇦🇪 | Arabe | 🇶🇦 | OSN, Shahid |
+| **Qatar** | 🇶🇦 | Arabe | 🇦🇪 | Services QA |
+| **Israël** | 🇮🇱 | Hébreu + AR | - | Services IL |
+
+---
+
+### **🇨🇳 Asie**
+
+| Pays | Drapeau | Langues | Voisins | Services spécifiques |
+|------|---------|---------|---------|----------------------|
+| **Chine** | 🇨🇳 | Chinois | 🇸🇬 | Bilibili, iQIYI, Youku, WeChat, Weibo, Tencent Video, Mango TV, Douyin, DingTalk |
+
+---
+
+## 🗣️ Langues supportées
+
+<div align="center">
+
+### 10 langues • Traduction complète de l'interface • Détection automatique
+
+</div>
+
+| Langue | Code | Région(s) principale(s) | Statut |
+|--------|------|-------------------------|--------|
+| **Anglais** | EN | 🌍 Global, 🇬🇧 UK, 🇺🇸 USA, 🇦🇺 AU, 🇸🇬 SG | ✅ Complète |
+| **Français** | FR | 🇫🇷 France, 🇧🇪 Belgique, 🇨🇭 Suisse | ✅ Complète |
+| **Allemand** | DE | 🇩🇪 Allemagne, 🇦🇹 Autriche, 🇨🇭 Suisse | ✅ Complète |
+| **Espagnol** | ES | 🇪🇸 Espagne | ✅ Complète |
+| **Italien** | IT | 🇮🇹 Italie, 🇨🇭 Suisse | ✅ Complète |
+| **Néerlandais** | NL | 🇳🇱 Pays-Bas, 🇧🇪 Belgique | ✅ Complète |
+| **Suédois** | SV | 🇸🇪 Suède | ✅ Complète |
+| **Norvégien** | NO | 🇳🇴 Norvège | ✅ Complète |
+| **Danois** | DA | 🇩🇰 Danemark | ✅ Complète |
+| **Chinois** | ZH | 🇨🇳 Chine, 🇸🇬 Singapour | ✅ Complète |
+| **Arabe** | AR | 🇦🇪 UAE, 🇶🇦 Qatar, 🇮🇱 Israël | ✅ Complète |
+| **Hébreu** | HE | 🇮🇱 Israël | ✅ Complète |
+
+### Traductions disponibles
+
+- 🏠 Navigation : Accueil, Vidéos, Musique, Jeux
+- 🔍 Interface : Recherche, Filtres, Sélection région
+- ⭐ Favoris : Gestion, Ajout, Suppression
+- 🎨 Thème : Mode clair/sombre
+- 📝 Descriptions : Titres, sous-titres, catégories
+
+---
+
+## 📺 Liste complète des services
+
+<div align="center">
+
+### 214 services • 5 catégories • Organisés par région
+
+</div>
+
+### 🎬 **Vidéo & Streaming** (85+ services)
+
+#### **Streaming Global**
+- **Netflix** - Leader mondial du streaming
+- **Disney+** - Marvel, Star Wars, Pixar, Disney
+- **Amazon Prime Video** - Films, séries, contenus originaux
+- **YouTube** - Vidéos gratuites et Premium
+- **Apple TV+** - Contenus originaux Apple
+- **Twitch** - Streaming en direct et gaming
+
+#### **Streaming Anime & Asie**
+- **Crunchyroll** - Anime légal #1 mondial
+- **Anime Digital Network (ADN)** - Anime français
+- **HIDIVE** - Anime indépendant
+- **Wakanim** - Anime Europe
+- **Bilibili** - Plateforme chinoise anime/gaming
+- **iQIYI** - Streaming chinois
+- **Youku** - Vidéos chinoises
+- **Tencent Video** - Streaming Tencent
+- **Mango TV** - TV chinoise
+- **Douyin** - TikTok chinois
+
+#### **Streaming Europe**
+- **Canal+ (MyCanal)** - Premium français
+- **Molotov TV** - TV française gratuite
+- **France TV** - TV publique française
+- **RTBF Auvio** - TV belge francophone
+- **RTL Play** - Streaming belge
+- **Pickx** - TV belge
+- **RTS Play** - TV suisse romande
+- **Play Suisse** - Streaming suisse
+- **Arte** - Culture franco-allemande
+- **6play** - M6 replay
+- **TF1+** - TF1 replay
+- **ARD Mediathek** - TV publique allemande
+- **ZDF** - TV publique allemande
+- **BBC iPlayer** - TV britannique
+- **ITV Hub** - TV britannique
+- **Channel 4** - TV britannique
+
+#### **Streaming Amérique du Nord**
+- **Hulu** - Streaming US
+- **Peacock** - NBCUniversal
+- **Paramount+** - ViacomCBS
+- **HBO Max** - Warner Bros
+- **ESPN+** - Sport US
+- **Showtime** - Premium US
+
+#### **Streaming Australie**
+- **Stan** - Streaming australien
+- **9Now** - TV australienne
+- **10 Play** - TV australienne
+- **ABC iView** - TV publique australienne
+- **SBS On Demand** - TV multiculturelle australienne
+
+#### **Sport**
+- **DAZN** - Sport en streaming
+- **Eurosport Player** - Sport européen
+- **beIN Sports** - Sport international
+- **RMC Sport** - Sport français
+
+#### **TV en direct & Info**
+- **Free TV+** - TV gratuite Free
+- **TV Mucho** - TV européenne
+- **Pluto TV** - TV gratuite
+- **BFM TV** - Info française
+- **LCI** - Info TF1
+- **CNews** - Info continue
+
+---
+
+### 🎵 **Musique & Audio** (45+ services)
+
+#### **Streaming Musical**
+- **Spotify** - Leader mondial
+- **Apple Music** - Musique Apple
+- **YouTube Music** - Google Music
+- **Deezer** - Musique française
+- **TIDAL** - HiFi audio
+- **Amazon Music** - Music Amazon
+- **Qobuz** - HiFi streaming
+
+#### **Musique Asie**
+- **QQ Music** - Musique chinoise
+- **NetEase Cloud Music** - Streaming chinois
+
+#### **Podcasts & Radio**
+- **Podcast Addict** - Podcasts
+- **TuneIn** - Radio mondiale
+- **Radio France** - Radios françaises
+
+---
+
+### 🎮 **Jeux & Cloud Gaming** (35+ services)
+
+#### **Stores & Launchers**
+- **Steam** - Store PC #1
+- **Epic Games Store** - Epic Games
+- **GOG** - Jeux DRM-free
+- **Battle.net** - Blizzard games
+- **Ubisoft Connect** - Ubisoft
+- **EA App** - Electronic Arts
+- **Xbox** - Microsoft Gaming
+- **PlayStation Store** - Sony Gaming
+- **Nintendo eShop** - Nintendo
+
+#### **Cloud Gaming**
+- **GeForce NOW** - NVIDIA cloud
+- **Xbox Cloud Gaming** - Microsoft
+- **PlayStation Plus Cloud** - Sony
+- **Amazon Luna** - Amazon cloud
+- **Boosteroid** - Cloud européen
+- **Shadow** - PC cloud
+- **Blacknut** - Cloud familial
+
+#### **Plateformes Mobile**
+- **Google Play Games** - Android games
+- **Apple Arcade** - iOS gaming
+
+---
+
+### 🔋 **Recharge & Navigation** (20+ services)
+
+#### **Planification de recharge**
+- **A Better Routeplanner (ABRP)** - Planification VE
+- **Chargemap** - Bornes Europe
+- **PlugShare** - Bornes mondiales
+- **ChargePoint** - Réseau US/EU
+- **Electromaps** - Bornes Europe
+
+#### **Réseaux de recharge**
+- **Tesla Supercharger** - Réseau Tesla
+- **XPENG Supercharging** - Réseau XPENG
+- **Ionity** - Réseau européen
+- **Fastned** - Bornes rapides EU
+- **Allego** - Bornes Europe
+
+#### **Navigation**
+- **Waze** - Navigation communautaire
+- **Google Maps** - Maps Google
+- **Apple Plans** - Maps Apple
+- **HERE WeGo** - Navigation HERE
+
+---
+
+### 🌐 **Services Web & Productivité** (25+ services)
+
+#### **Email & Communication**
+- **Gmail** - Email Google
+- **Outlook** - Email Microsoft
+- **ProtonMail** - Email sécurisé
+- **WeChat** - Messagerie chinoise
+- **Weibo** - Social chinois
+- **WhatsApp Web** - Messagerie
+- **Telegram Web** - Messagerie
+
+#### **Cloud & Stockage**
+- **Google Drive** - Cloud Google
+- **OneDrive** - Cloud Microsoft
+- **Dropbox** - Cloud storage
+- **iCloud** - Cloud Apple
+
+#### **Productivité**
+- **Google Docs** - Documents Google
+- **Microsoft 365** - Suite Office
+- **Notion** - Notes & organisation
+- **Trello** - Gestion de projet
+- **Slack** - Communication équipe
+- **Zoom** - Visioconférence
+- **DingTalk** - Productivité Alibaba
+
+#### **Autres**
+- **ChatGPT** - IA conversationnelle
+- **GitHub** - Code & développement
+- **Stack Overflow** - Q&A développeurs
+
+---
+
+## 📊 Statistiques
+
+<div align="center">
+
+| Catégorie | Nombre de services | % du total |
+|-----------|-------------------|------------|
+| 🎬 **Vidéo** | 85+ | 40% |
+| 🎵 **Musique** | 45+ | 21% |
+| 🎮 **Jeux** | 35+ | 16% |
+| 🔋 **Recharge** | 20+ | 9% |
+| 🌐 **Web** | 25+ | 12% |
+| **TOTAL** | **214** | **100%** |
+
+</div>
 
 ---
 
@@ -140,222 +447,122 @@ npm run deploy
 ```
 xpengmedia/
 ├── public/                  # Fichiers statiques
-│   ├── icons/              # Icônes et documentation
-│   └── README.md           # Doc système d'icônes
 ├── src/
 │   ├── components/         # Composants React
 │   │   ├── favorites/      # Gestion des favoris
-│   │   ├── icons/          # Composants icônes (PlatformIcon)
-│   │   ├── layout/         # Layout (Navbar, Footer)
-│   │   ├── locale/         # Sélecteur de langue
-│   │   ├── modals/         # Modales (AddCustomUrl)
-│   │   ├── platforms/      # Cards services (EditablePlatformCard)
-│   │   └── ui/             # Composants UI réutilisables
+│   │   ├── icons/          # PlatformIcon
+│   │   ├── locale/         # LocaleSelector
+│   │   ├── modals/         # Modales
+│   │   ├── platforms/      # EditablePlatformCard
+│   │   └── ui/             # Composants UI
 │   ├── context/            # React Context
 │   │   ├── FavoritesContext.tsx
 │   │   ├── LocaleContext.tsx
 │   │   └── ThemeContext.tsx
 │   ├── data/
-│   │   └── platforms.ts    # 214 services organisés
+│   │   ├── platforms.ts    # 214 services
+│   │   └── regionsMetadata.ts  # Métadonnées régions
 │   ├── hooks/              # Custom hooks
 │   │   └── useSmartFavorites.ts
-│   ├── pages/              # Pages principales
+│   ├── pages/              # Pages
 │   │   └── HomePage.tsx
-│   ├── App.tsx             # Composant racine
-│   ├── main.tsx            # Point d'entrée
-│   └── index.css           # Styles globaux
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── index.css
+├── REGIONAL_SYSTEM.md      # Doc système régional
+├── LOGOS_GUIDE.md          # Guide logos
 ├── README.md               # Ce fichier
 ├── package.json
 ├── vite.config.ts
-├── tailwind.config.js
-└── tsconfig.json
+└── tailwind.config.js
 ```
-
----
-
-## 🌍 Régions et langues supportées
-
-| Région | Drapeau | Langues | Services |
-|--------|---------|---------|----------|
-| **Global** | 🌍 | EN | 150+ universels |
-| **France** | 🇫🇷 | FR | Global + Canal+, Molotov, ADN |
-| **Deutschland** | 🇩🇪 | DE | Global + ZDF, ARD, Play Suisse |
-| **Österreich** | 🇦🇹 | DE | Global + services AT |
-| **Nederland** | 🇳🇱 | NL | Global + services NL |
-| **België/Belgique** | 🇧🇪 | NL | Global + services BE |
-| **España** | 🇪🇸 | ES | Global + services ES |
-| **Italia** | 🇮🇹 | IT | Global + services IT |
-| **Sverige** | 🇸🇪 | SV | Global + services SE |
-| **Norge** | 🇳🇴 | NO | Global + services NO |
-| **Danmark** | 🇩🇰 | DA | Global + services DK |
-| **Schweiz/Suisse** | 🇨🇭 | DE | Global + Play Suisse |
-| **United Kingdom** | 🇬🇧 | EN | Global + services UK |
-| **United States** | 🇺🇸 | EN | Global + Hulu, Peacock, ESPN+ |
-| **Australia** | 🇦🇺 | EN | Global + services AU |
-| **中国 China** | 🇨🇳 | ZH | Global + Bilibili, iQIYI, Youku, WeChat |
-| **Singapore** | 🇸🇬 | EN | Global + services SG |
-| **UAE الإمارات** | 🇦🇪 | AR | Global + services ME |
-| **Qatar قطر** | 🇶🇦 | AR | Global + services QA |
-| **Israel ישראל** | 🇮🇱 | HE | Global + services IL |
-
----
-
-## 📸 Captures d'écran
-
-### Mode clair - Portrait
-Interface compacte optimisée pour mobile avec 5 colonnes de services.
-
-### Mode sombre - Paysage
-8 colonnes visibles sans scroll, parfait pour l'écran XPENG G6.
-
-### Sélecteur de région
-Dropdown élégant avec overlay pour changer de pays/langue.
 
 ---
 
 ## 🗺️ Roadmap
 
-### ✅ Version 2.0 (Actuelle)
+### ✅ Version 2.1 (Actuelle)
 - [x] 214 services disponibles
 - [x] 10 langues complètes
-- [x] Design XPENG uniforme
-- [x] Mode paysage optimisé
-- [x] Icônes uniformes avec gradients
-- [x] Favoris intelligents avec AI
-- [x] Services chinois (Bilibili, WeChat, Youku, etc.)
-- [x] Services anime légaux (Crunchyroll, ADN, HIDIVE, Wakanim)
+- [x] Système de régionalisation dynamique
+- [x] Groupes régionaux intelligents
+- [x] Suggestions de régions basées sur proximité
+- [x] Support logos réels (URLs + emojis)
+- [x] Changement langue instantané
 
-### 🔄 Version 2.1 (En cours)
+### 🔄 Version 2.2 (Prochaine)
+- [ ] Intégration logos réels pour tous les services
+- [ ] Sections dans LocaleSelector (Global, Suggérés, Autres)
+- [ ] Badges nombre de services par région
 - [ ] PWA (Progressive Web App)
 - [ ] Mode hors-ligne
-- [ ] Synchronisation cloud
-- [ ] Historique d'utilisation
-- [ ] Recommandations personnalisées avancées
 
 ### 🚀 Version 3.0 (Futur)
 - [ ] Intégration API XPENG
 - [ ] Commandes vocales
 - [ ] Widgets personnalisables
-- [ ] Partage de profils
 - [ ] Mode multi-utilisateurs
+- [ ] Synchronisation cloud
 
 ---
 
 ## 📝 Changelog
 
-### **v2.0.0** - 2025-01-12 ✨ Version majeure
+### **v2.1.0** - 2025-01-12 ✨ Régionalisation & Logos
 
 #### 🆕 Nouvelles fonctionnalités
-- **Système d'icônes uniforme** : PlatformIcon avec gradients XPENG (40/48/64px)
-- **Bouton suppression agrandi** : 32x32px cliquable avec ring blanc
-- **Mode paysage optimisé** : 8 colonnes, navbar compacte (h-12), textes réduits
-- **7 nouvelles langues** : Italien, Néerlandais, Suédois, Norvégien, Danois, Arabe, Hébreu
-- **6 services chinois** : Youku, Douyin, Mango TV, WeChat, Weibo, DingTalk
-- **Services anime légaux** : HIDIVE, Wakanim ajoutés
+- **Système de régionalisation dynamique** : Métadonnées complètes pour 20 régions
+- **Groupes régionaux** : 5 groupes (Europe Ouest, Nord, Scandinave, Anglophone, Asie, Moyen-Orient)
+- **Suggestions intelligentes** : Basées sur voisins géographiques et linguistiques
+- **Support logos réels** : PlatformIcon accepte URLs + emojis
+- **RTL Play Belgique** : Ajout service belge
+- **Changement langue instantané** : Plus besoin de rafraîchir
 
 #### 🔧 Corrections
-- **Free TV+ remplace Oqee** : URL tv.free.fr, service actuel
-- **Funimation supprimé** : Fusionné avec Crunchyroll
-- **ADN URL corrigée** : Slash final retiré
-- **3 doublons supprimés** : dazn → dazn-europe, apple-music, chargemap
-- **9 URLs nettoyées** : Slash final inutile retiré
+- **Uniformisation complète** : Toutes les cards même taille (Favoris, Catégories)
+- **Séparation Chine** : Global exclut maintenant china et asia
+- **Icônes homogènes** : Taille, padding, gap uniformes partout
 
-#### 🎨 Améliorations UI
-- **Background bleuté** : Gradient cyan très clair style XPENG
-- **Textes lisibles** : text-slate-900 → text-slate-800
-- **Navbar optimisée** : Hauteur réduite en landscape (h-20 → h-12)
-- **Grille favoris** : 5 cols portrait, 8 cols landscape
-- **SearchBar compacte** : py-3 → py-1.5 en landscape
-- **Icônes cohérentes** : Fond gradient + border cyan partout
-
-#### 📊 Statistiques
-- **Services totaux** : 214 (+7 nets)
-- **Langues** : 10 complètes
-- **Régions** : 20 zones couvertes
-- **Catégories** : Vidéo, Musique, Jeux, Recharge, Services web
+#### 📚 Documentation
+- **REGIONAL_SYSTEM.md** : Guide complet système régional (695 lignes)
+- **LOGOS_GUIDE.md** : Guide remplacement emojis par logos
+- **README mis à jour** : Listes complètes services, pays, langues
 
 ---
 
-### **v1.5.0** - 2024-12-15
+### **v2.0.0** - 2025-01-11 ✨ Version majeure
 
-#### 🆕 Fonctionnalités
-- Display toutes les sous-catégories avec design XPENG
-- Sections avec gradients colorés personnalisés
-- Boutons d'ajout de services et URLs personnalisées
-- Mode édition pour gérer les services
+#### 🆕 Nouvelles fonctionnalités
+- **Système d'icônes uniforme** : PlatformIcon avec gradients
+- **Mode paysage optimisé** : 8 colonnes, navbar compacte
+- **7 nouvelles langues** : IT, NL, SV, NO, DA, AR, HE
+- **Services chinois** : Youku, Douyin, Mango TV, WeChat, Weibo, DingTalk
+- **Services anime** : HIDIVE, Wakanim
 
 #### 🔧 Corrections
-- Z-index dropdown langue corrigé
-- Responsive mobile/tablette/desktop amélioré
-- Performance de chargement optimisée
-
----
-
-### **v1.0.0** - 2024-11-01 🎉 Version initiale
-
-#### 🚀 Lancement
-- Application de base avec 150+ services
-- Support 3 langues (EN, FR, DE)
-- Thème clair/sombre
-- Navigation par catégories
-- Design inspiré XPENG XOS
+- **Free TV+ remplace Oqee**
+- **3 doublons supprimés**
+- **9 URLs nettoyées**
 
 ---
 
 ## 🤝 Contribution
 
-Les contributions sont les bienvenues ! Voici comment participer :
-
-### **Signaler un bug**
-1. Vérifiez qu'il n'existe pas déjà dans [Issues](https://github.com/dlnraja/xpengmedia/issues)
-2. Créez une nouvelle issue avec le template "Bug Report"
-3. Décrivez le problème en détail avec captures d'écran si possible
-
-### **Proposer une fonctionnalité**
-1. Ouvrez une issue avec le template "Feature Request"
-2. Expliquez le cas d'usage et les bénéfices
-3. Discutez de l'implémentation si besoin
+Les contributions sont les bienvenues ! 
 
 ### **Ajouter un service**
-1. Forkez le projet
-2. Modifiez `src/data/platforms.ts`
-3. Suivez la structure existante :
-```typescript
-{
-  id: 'service-id',
-  name: 'Service Name',
-  description: 'Description courte du service.',
-  url: 'https://service.com',
-  icon: '🎬',
-  availability: ['global'], // ou ['europe'], ['china'], etc.
-  tags: ['Tag1', 'Tag2'],
-}
-```
-4. Créez une Pull Request
+1. Modifiez `src/data/platforms.ts`
+2. Suivez la structure existante
+3. Créez une Pull Request
 
-### **Code de conduite**
-- Soyez respectueux et constructif
-- Testez vos modifications avant de soumettre
-- Suivez les conventions de code existantes
-- Documentez les changements importants
+### **Signaler un bug**
+- [Créer une issue](https://github.com/dlnraja/xpengmedia/issues)
 
 ---
 
 ## 📄 Licence
 
 Ce projet est sous licence **MIT**.
-
-Vous êtes libre de :
-- ✅ Utiliser commercialement
-- ✅ Modifier
-- ✅ Distribuer
-- ✅ Utiliser en privé
-
-Conditions :
-- 📋 Inclure la licence et le copyright
-- ⚠️ Aucune garantie fournie
-
-Voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
 ---
 
@@ -373,20 +580,7 @@ Voir le fichier [LICENSE](LICENSE) pour plus de détails.
 
 - **XPENG Motors** pour l'inspiration du design XOS
 - **React Team** pour l'excellente bibliothèque
-- **Vite Team** pour le build tool rapide
-- **Tailwind CSS** pour le système de styling
-- **Communauté open-source** pour les outils et bibliothèques
-
----
-
-## 📞 Support
-
-Besoin d'aide ? Plusieurs options :
-
-- 📖 **Documentation** : Lisez ce README complet
-- 🐛 **Bugs** : [Créer une issue](https://github.com/dlnraja/xpengmedia/issues)
-- 💡 **Questions** : [Discussions GitHub](https://github.com/dlnraja/xpengmedia/discussions)
-- ⭐ **Star le projet** si vous l'aimez !
+- **Communauté open-source** pour les outils
 
 ---
 
@@ -397,7 +591,6 @@ Besoin d'aide ? Plusieurs options :
 **Fait avec 💙 pour les conducteurs XPENG 🚗**
 
 [![GitHub stars](https://img.shields.io/github/stars/dlnraja/xpengmedia?style=social)](https://github.com/dlnraja/xpengmedia/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/dlnraja/xpengmedia?style=social)](https://github.com/dlnraja/xpengmedia/network/members)
 
 [⬆ Retour en haut](#-xpeng-media-hub-)
 
