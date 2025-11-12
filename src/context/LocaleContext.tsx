@@ -362,29 +362,34 @@ export const LocaleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // Charger depuis localStorage ou détecter automatiquement
     const saved = localStorage.getItem('xpeng_locale');
     if (saved) {
-      return JSON.parse(saved);
+      const parsedLocale = JSON.parse(saved);
+      console.log('🔵 Locale chargé depuis localStorage:', parsedLocale);
+      return parsedLocale;
     }
-    return detectBrowserLocale();
+    const detectedLocale = detectBrowserLocale();
+    console.log('🔍 Locale détecté automatiquement:', detectedLocale);
+    return detectedLocale;
   });
 
   // Sauvegarder dans localStorage à chaque changement
   useEffect(() => {
+    console.log('💾 Sauvegarde localStorage:', locale);
     localStorage.setItem('xpeng_locale', JSON.stringify(locale));
   }, [locale]);
 
   const setLocale = (newLocale: Locale) => {
-    console.log('LocaleContext: Setting new locale', newLocale);
+    console.log('🔄 LocaleContext: Setting new locale', newLocale);
+    console.log('📍 Locale actuel avant changement:', locale);
     setLocaleState(newLocale);
+    console.log('✅ setLocaleState appelé avec:', newLocale);
   };
 
   // Fonction de traduction
   const t = (key: string): string => {
     const lang = locale.language;
     const translation = translations[lang]?.[key] || translations['en']?.[key] || key;
-    // Debug: log seulement les clés importantes
-    if (key === 'home' || key === 'selectRegion') {
-      console.log(`t("${key}") with lang=${lang} =>`, translation);
-    }
+    // Debug: log toutes les traductions pour diagnostiquer
+    console.log(`🔤 t("${key}") | locale.region=${locale.region} | locale.language=${lang} | result="${translation}"`);
     return translation;
   };
 
