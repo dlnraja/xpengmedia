@@ -27,11 +27,11 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
     lg: 'text-[2rem]',    // 32px
   };
 
-  // Taille d'image pour logos réels
+  // Taille d'image pour logos réels (avec padding pour cohérence)
   const imageSize = {
-    sm: 'w-7 h-7',   // 28px
-    md: 'w-8 h-8',   // 32px
-    lg: 'w-10 h-10', // 40px
+    sm: 'w-6 h-6',   // 24px avec padding
+    md: 'w-7 h-7',   // 28px avec padding
+    lg: 'w-9 h-9',   // 36px avec padding
   };
 
   // Détecter si c'est une URL (logo) ou un emoji
@@ -56,11 +56,20 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
       aria-hidden="true"
     >
       {isUrl ? (
-        // Logo réel (image)
+        // Logo réel (image SVG avec fond transparent)
         <img 
           src={icon} 
           alt={name || 'Service logo'} 
-          className={`${imageSize[size]} object-contain transition-all duration-200`}
+          className={`
+            ${imageSize[size]} 
+            object-contain 
+            transition-all 
+            duration-200
+            p-1
+          `}
+          style={{
+            filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1))',
+          }}
           loading="lazy"
           onError={(e) => {
             // Fallback : si l'image ne charge pas, afficher un emoji par défaut
