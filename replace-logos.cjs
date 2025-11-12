@@ -2,9 +2,9 @@
 const fs = require('fs');
 const path = require('path');
 
-// Mapping complet de TOUS les logos disponibles (ID du service => URL du logo)
+// Mapping COMPLET avec logos de TOUTES sources (Simple Icons + alternatives)
 const logoMapping = {
-  // 🎬 Streaming Global
+  // 🎬 Streaming Global - Simple Icons
   'apple-tv': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/appletv.svg',
   'disney-plus': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/disneyplus.svg',
   'hbo-max': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/hbo.svg',
@@ -20,6 +20,17 @@ const logoMapping = {
   'vimeo': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/vimeo.svg',
   'dailymotion': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/dailymotion.svg',
   
+  // 🎬 Streaming - Logos supplémentaires
+  'espn-plus': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/espn.svg',
+  'dazn': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/dazn.svg',
+  'roku-channel': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/roku.svg',
+  'showtime': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/showtime.svg',
+  'starz': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/starz.svg',
+  'pluto-tv': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/pluto.svg',
+  'tubi': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/tubi.svg',
+  'curiositystream': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/curiositystream.svg',
+  'arte': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/arte.svg',
+  
   // 🎵 Musique
   'spotify': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/spotify.svg',
   'apple-music': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/applemusic.svg',
@@ -30,6 +41,10 @@ const logoMapping = {
   'soundcloud': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/soundcloud.svg',
   'qobuz': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/qobuz.svg',
   'pandora': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/pandora.svg',
+  'audiomack': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/audiomack.svg',
+  'bandcamp': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/bandcamp.svg',
+  'mixcloud': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/mixcloud.svg',
+  'radio-garden': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/radio.svg',
   
   // 🎮 Gaming (IDs corrigés selon platforms.ts)
   'steam-link': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/steam.svg',
@@ -53,6 +68,16 @@ const logoMapping = {
   'discord-web': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/discord.svg',
   'wechat-web': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/wechat.svg',
   'weibo': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/sinaweibo.svg',
+  'xiaohongshu': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/xiaohongshu.svg',
+  'bilibili': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/bilibili.svg',
+  'douyin': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/tiktok.svg',
+  'iqiyi': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/iqiyi.svg',
+  'qq-music': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/tencentqq.svg',
+  'netease-music': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/neteasemusic.svg',
+  'alipay': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/alipay.svg',
+  'taobao': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/taobao.svg',
+  'jd': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/jd.svg',
+  'baidu': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/baidu.svg',
   
   // 🔋 Recharge & Navigation
   'tesla-supercharger': 'https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/tesla.svg',
