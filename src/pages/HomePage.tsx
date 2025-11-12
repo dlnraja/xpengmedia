@@ -365,7 +365,7 @@ export const HomePage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8">
+            <div className="grid grid-cols-5 gap-1.5 landscape:grid-cols-8 landscape:gap-2 md:grid-cols-6 md:gap-3 lg:grid-cols-8">
               {getVisiblePlatforms(category.platforms).map((platform) => (
                 <EditablePlatformCard
                   key={platform.id}
@@ -404,7 +404,7 @@ export const HomePage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8">
+            <div className="grid grid-cols-5 gap-1.5 landscape:grid-cols-8 landscape:gap-2 md:grid-cols-6 md:gap-3 lg:grid-cols-8">
               {getVisiblePlatforms(category.platforms).map((platform) => (
                 <EditablePlatformCard
                   key={platform.id}
@@ -443,7 +443,7 @@ export const HomePage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8">
+            <div className="grid grid-cols-5 gap-1.5 landscape:grid-cols-8 landscape:gap-2 md:grid-cols-6 md:gap-3 lg:grid-cols-8">
               {getVisiblePlatforms(category.platforms).map((platform) => (
                 <EditablePlatformCard
                   key={platform.id}
@@ -482,7 +482,7 @@ export const HomePage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8">
+            <div className="grid grid-cols-5 gap-1.5 landscape:grid-cols-8 landscape:gap-2 md:grid-cols-6 md:gap-3 lg:grid-cols-8">
               {getVisiblePlatforms(category.platforms).map((platform) => (
                 <EditablePlatformCard
                   key={platform.id}
@@ -521,7 +521,7 @@ export const HomePage: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 md:gap-3 lg:grid-cols-6 xl:grid-cols-8">
+            <div className="grid grid-cols-5 gap-1.5 landscape:grid-cols-8 landscape:gap-2 md:grid-cols-6 md:gap-3 lg:grid-cols-8">
               {getVisiblePlatforms(category.platforms).map((platform) => (
                 <EditablePlatformCard
                   key={platform.id}
@@ -551,7 +551,7 @@ export const HomePage: React.FC = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <div className="grid grid-cols-5 gap-1.5 landscape:grid-cols-8 landscape:gap-2 md:grid-cols-6 md:gap-3 lg:grid-cols-8">
           {getVisiblePlatforms(allPlatforms).map((platform) => (
             <EditablePlatformCard
               key={platform.id}
