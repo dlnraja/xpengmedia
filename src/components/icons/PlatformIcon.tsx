@@ -9,6 +9,7 @@ interface PlatformIconProps {
 
 export const PlatformIcon: React.FC<PlatformIconProps> = ({
   icon,
+  name,
   size = 'md',
   className = '',
 }) => {
@@ -25,6 +26,16 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
     md: 'text-[1.75rem]', // 28px
     lg: 'text-[2rem]',    // 32px
   };
+
+  // Taille d'image pour logos réels
+  const imageSize = {
+    sm: 'w-7 h-7',   // 28px
+    md: 'w-8 h-8',   // 32px
+    lg: 'w-10 h-10', // 40px
+  };
+
+  // Détecter si c'est une URL (logo) ou un emoji
+  const isUrl = icon.startsWith('http') || icon.startsWith('/') || icon.startsWith('data:');
 
   return (
     <div
@@ -44,9 +55,25 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
       `}
       aria-hidden="true"
     >
-      <span className={`flex items-center justify-center leading-none ${emojiSize[size]}`}>
-        {icon}
-      </span>
+      {isUrl ? (
+        // Logo réel (image)
+        <img 
+          src={icon} 
+          alt={name || 'Service logo'} 
+          className={`${imageSize[size]} object-contain transition-all duration-200`}
+          loading="lazy"
+          onError={(e) => {
+            // Fallback : si l'image ne charge pas, afficher un emoji par défaut
+            e.currentTarget.style.display = 'none';
+            e.currentTarget.parentElement!.innerHTML = '<span class="text-2xl">📱</span>';
+          }}
+        />
+      ) : (
+        // Emoji (comportement actuel)
+        <span className={`flex items-center justify-center leading-none ${emojiSize[size]}`}>
+          {icon}
+        </span>
+      )}
     </div>
   );
 };

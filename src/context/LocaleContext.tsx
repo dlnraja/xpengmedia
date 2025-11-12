@@ -388,8 +388,6 @@ export const LocaleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const t = (key: string): string => {
     const lang = locale.language;
     const translation = translations[lang]?.[key] || translations['en']?.[key] || key;
-    // Debug: log toutes les traductions pour diagnostiquer
-    console.log(`🔤 t("${key}") | locale.region=${locale.region} | locale.language=${lang} | result="${translation}"`);
     return translation;
   };
 
