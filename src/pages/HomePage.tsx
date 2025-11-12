@@ -340,7 +340,7 @@ export const HomePage: React.FC = () => {
         className="mt-8 space-y-8 md:mt-12 md:space-y-10"
       >
         {/* Vidéos - Toutes les sous-catégories */}
-        {videoCategories.map((category) => (
+        {videoCategories.filter(category => getVisiblePlatforms(category.platforms).length > 0).map((category) => (
           <div key={category.id}>
             <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-4 shadow-lg backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -379,7 +379,7 @@ export const HomePage: React.FC = () => {
         ))}
 
         {/* Musique - Toutes les sous-catégories */}
-        {musicCategories.map((category) => (
+        {musicCategories.filter(category => getVisiblePlatforms(category.platforms).length > 0).map((category) => (
           <div key={category.id}>
             <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-4 shadow-lg backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -418,7 +418,7 @@ export const HomePage: React.FC = () => {
         ))}
 
         {/* Jeux - Toutes les sous-catégories */}
-        {gamesCategories.map((category) => (
+        {gamesCategories.filter(category => getVisiblePlatforms(category.platforms).length > 0).map((category) => (
           <div key={category.id}>
             <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-4 shadow-lg backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -457,7 +457,7 @@ export const HomePage: React.FC = () => {
         ))}
 
         {/* Recharge - Toutes les sous-catégories */}
-        {chargingCategories.map((category) => (
+        {chargingCategories.filter(category => getVisiblePlatforms(category.platforms).length > 0).map((category) => (
           <div key={category.id}>
             <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-4 shadow-lg backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -496,7 +496,7 @@ export const HomePage: React.FC = () => {
         ))}
 
         {/* Autres Services - Toutes les sous-catégories */}
-        {otherServicesCategories.map((category) => (
+        {otherServicesCategories.filter(category => getVisiblePlatforms(category.platforms).length > 0).map((category) => (
           <div key={category.id}>
             <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-4 shadow-lg backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
