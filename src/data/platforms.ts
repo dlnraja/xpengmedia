@@ -23,9 +23,9 @@ export interface PlatformCategory {
 
 export const videoCategories: PlatformCategory[] = [
   {
-    id: 'global-streaming',
-    title: 'Streaming international',
-    subtitle: 'Vos plateformes vidéo favorites accessibles partout',
+    id: 'streaming-vod',
+    title: 'Streaming & VOD',
+    subtitle: 'Films, séries, TV en direct et contenus à la demande',
     highlight: 'Qualité 4K & Dolby Atmos',
     colorFrom: 'from-slate-900',
     colorTo: 'to-cyan-500',
@@ -671,9 +671,9 @@ export const videoCategories: PlatformCategory[] = [
     ],
   },
   {
-    id: 'asia',
-    title: 'Expérience Asie & Chine',
-    subtitle: 'Contenus premium pour les conducteurs XPENG en Asie',
+    id: 'asia-streaming',
+    title: 'Streaming Asie & Chine',
+    subtitle: 'Contenus premium pour conducteurs XPENG en Asie (masqué hors Asie)',
     highlight: 'Optimisé pour Xmart OS',
     colorFrom: 'from-emerald-500',
     colorTo: 'to-lime-400',
@@ -818,10 +818,10 @@ export const videoCategories: PlatformCategory[] = [
 
 export const musicCategories: PlatformCategory[] = [
   {
-    id: 'global-music',
-    title: 'Audio haute fidélité',
-    subtitle: 'Services compatibles XPENG Sound',
-    highlight: 'Dolby Atmos & Hi-Res',
+    id: 'music',
+    title: 'Musique & Audio',
+    subtitle: 'Services compatibles XPENG Sound avec Dolby Atmos & Hi-Res',
+    highlight: 'Audio Spatial',
     colorFrom: 'from-purple-600',
     colorTo: 'to-pink-500',
     platforms: [
@@ -964,8 +964,8 @@ export const musicCategories: PlatformCategory[] = [
   },
   {
     id: 'asia-music',
-    title: 'Sélection XPENG Chine',
-    subtitle: 'Services intégrés à Xmart OS',
+    title: 'Musique Asie & Chine',
+    subtitle: 'Services intégrés à Xmart OS (masqué hors Asie)',
     colorFrom: 'from-teal-500',
     colorTo: 'to-sky-500',
     platforms: [
@@ -992,9 +992,9 @@ export const musicCategories: PlatformCategory[] = [
 
 export const gamesCategories: PlatformCategory[] = [
   {
-    id: 'quick-play',
-    title: 'Jeux instantanés',
-    subtitle: 'Divertissement rapide pendant la recharge',
+    id: 'gaming',
+    title: 'Jeux & Divertissement',
+    subtitle: 'Cloud gaming, jeux instantanés et divertissement familial',
     colorFrom: 'from-orange-500',
     colorTo: 'to-amber-400',
     platforms: [
@@ -1518,9 +1518,9 @@ export const otherServicesCategories: PlatformCategory[] = [
     ],
   },
   {
-    id: 'web-services',
-    title: 'Services Web & Productivité',
-    subtitle: 'Applications web populaires accessibles depuis votre XPENG',
+    id: 'web-social',
+    title: 'Web, Social & Productivité',
+    subtitle: 'Email, messagerie, réseaux sociaux et applications web',
     colorFrom: 'from-cyan-600',
     colorTo: 'to-blue-500',
     platforms: [

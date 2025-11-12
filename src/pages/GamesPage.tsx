@@ -22,10 +22,10 @@ const GamesPage: React.FC = () => {
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <a
-                href="#quick-play"
+                href="#gaming"
                 className="inline-flex items-center rounded-full bg-white/90 px-5 py-2 text-sm font-medium text-slate-900 transition hover:bg-white"
               >
-                Jeux instantanés
+                Jeux & Divertissement
               </a>
               <a
                 href="#kids"

@@ -23,16 +23,16 @@ export const VideosPage: React.FC = () => {
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <a
-                href="#global-streaming"
+                href="#streaming-vod"
                 className="inline-flex items-center rounded-full bg-white/90 px-5 py-2 text-sm font-medium text-slate-900 transition hover:bg-white"
               >
-                Découvrir la sélection globale
+                Découvrir Streaming & VOD
               </a>
               <a
-                href="#asia"
+                href="#asia-streaming"
                 className="inline-flex items-center rounded-full border border-white/40 px-5 py-2 text-sm font-medium text-white/80 transition hover:bg-white/10"
               >
-                Expérience XPENG Chine
+                Streaming Asie & Chine
               </a>
             </div>
           </motion.div>
