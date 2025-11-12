@@ -1,4 +1,4 @@
-export type AvailabilityScope = 'global' | 'china' | 'europe' | 'north-america' | 'asia' | 'australia' | 'middle-east';
+export type AvailabilityScope = 'global' | 'china' | 'europe' | 'north-america' | 'asia' | 'australia' | 'middle-east' | 'western_europe' | 'northern_europe' | 'france' | 'germany' | 'spain' | 'italy' | 'uk' | 'anglophone';
 
 export interface PlatformLink {
   id: string;
@@ -72,7 +72,7 @@ export const videoCategories: PlatformCategory[] = [
         description: 'Cinéma, séries, sport et documentaires premium français.',
         url: 'https://www.canalplus.com',
         icon: 'https://upload.wikimedia.org/wikipedia/commons/1/1a/Canal%2B.svg?v=1762981567074',
-        availability: ['europe'],
+        availability: ['global', 'europe', 'western_europe', 'france'],
         tags: ['Premium', 'Sport', 'Cinéma'],
       },
       {
@@ -414,7 +414,7 @@ export const videoCategories: PlatformCategory[] = [
         description: 'TV française en direct et replay gratuit.',
         url: 'https://www.molotov.tv',
         icon: 'https://cdn.simpleicons.org/molotov/0D0E10?v=1762981567074',
-        availability: ['europe'],
+        availability: ['global', 'europe', 'western_europe', 'france'],
         tags: ['France', 'Gratuit'],
       },
       {
@@ -430,9 +430,9 @@ export const videoCategories: PlatformCategory[] = [
         id: 'tvmucho',
         name: 'TVMucho',
         description: 'TV européenne en streaming gratuit.',
-        url: 'https://tvmucho.com',
+        url: 'https://www.tvmucho.com',
         icon: 'https://ui-avatars.com/api/?name=TVmucho&background=0099FF&color=fff&size=128&bold=true&font-size=0.35&v=1762981567074',
-        availability: ['europe'],
+        availability: ['global', 'europe'],
         tags: ['Europe', 'Gratuit'],
       },
       {
@@ -450,7 +450,7 @@ export const videoCategories: PlatformCategory[] = [
         description: 'Culture, documentaires et cinéma d\'auteur FR/DE.',
         url: 'https://www.arte.tv/fr/direct/',
         icon: 'https://upload.wikimedia.org/wikipedia/commons/4/4b/Arte_Logo_2017.svg?v=1762981567074',
-        availability: ['europe'],
+        availability: ['global', 'europe', 'western_europe', 'france'],
         tags: ['Culture', 'Gratuit', 'FR/DE'],
       },
       {
@@ -459,7 +459,7 @@ export const videoCategories: PlatformCategory[] = [
         description: 'TV publique française avec replay gratuit.',
         url: 'https://www.france.tv/direct',
         icon: 'https://upload.wikimedia.org/wikipedia/fr/3/3b/France_T%C3%A9l%C3%A9visions_2018.svg?v=1762981567074',
-        availability: ['europe'],
+        availability: ['global', 'europe', 'western_europe', 'france'],
         tags: ['Gratuit', 'France'],
       },
       {
@@ -468,7 +468,7 @@ export const videoCategories: PlatformCategory[] = [
         description: 'TV publique allemande avec contenus gratuits.',
         url: 'https://www.zdf.de/live-tv',
         icon: 'https://upload.wikimedia.org/wikipedia/commons/e/e5/ZDF_logo.svg?v=1762981567074',
-        availability: ['europe'],
+        availability: ['global', 'europe', 'northern_europe', 'germany'],
         tags: ['Gratuit', 'Deutschland'],
       },
     ],
@@ -495,7 +495,7 @@ export const videoCategories: PlatformCategory[] = [
         description: 'Programmes BBC avec interface cinématographique.',
         url: 'https://www.bbc.co.uk/iplayer',
         icon: 'https://cdn.simpleicons.org/bbc/000000?v=1762981567074',
-        availability: ['europe'],
+        availability: ['global', 'europe', 'anglophone', 'uk'],
         tags: ['Live', 'News'],
       },
       {
@@ -504,7 +504,7 @@ export const videoCategories: PlatformCategory[] = [
         description: 'Plateforme allemande avec contenus culturels.',
         url: 'https://www.ardmediathek.de/live',
         icon: 'https://upload.wikimedia.org/wikipedia/commons/5/5c/ARD_logo.svg?v=1762981567074',
-        availability: ['europe'],
+        availability: ['global', 'europe', 'northern_europe', 'germany'],
       },
       {
         id: 'canalplus',
@@ -1382,7 +1382,7 @@ export const chargingCategories: PlatformCategory[] = [
         description: 'État du trafic routier en France en temps réel.',
         url: 'https://www.infotrafic.com',
         icon: 'https://ui-avatars.com/api/?name=Traffic&background=FF0000&color=fff&size=128&bold=true&font-size=0.35&v=1762981567074',
-        availability: ['europe'],
+        availability: ['global', 'europe', 'western_europe', 'france'],
         tags: ['Trafic', 'France'],
       },
     ],
@@ -1746,7 +1746,7 @@ export const otherServicesCategories: PlatformCategory[] = [
         description: 'Journal français de référence.',
         url: 'https://www.lemonde.fr',
         icon: 'https://img.icons8.com/fluency/96/news.png',
-        availability: ['europe'],
+        availability: ['global', 'europe', 'western_europe', 'france'],
         tags: ['News', 'France'],
       },
       {
@@ -2018,7 +2018,7 @@ export const otherServicesCategories: PlatformCategory[] = [
         description: 'Chaîne YouTube officielle XPENG pour l\'Europe.',
         url: 'https://www.youtube.com/@XPENGEurope',
         icon: 'https://logo.clearbit.com/xpeng.com',
-        availability: ['europe'],
+        availability: ['global', 'europe'],
         tags: ['Officiel', 'Europe'],
       },
       {
@@ -2063,7 +2063,7 @@ export const otherServicesCategories: PlatformCategory[] = [
         description: 'Boutiques et accessoires pour XPENG en France.',
         url: 'https://www.greendrive-accessories.com/fr/',
         icon: 'https://logo.clearbit.com/amazon.fr',
-        availability: ['europe'],
+        availability: ['global', 'europe', 'western_europe', 'france'],
         tags: ['Accessoires', 'Shopping'],
       },
       {
@@ -2072,7 +2072,7 @@ export const otherServicesCategories: PlatformCategory[] = [
         description: 'Serveur Discord de la communauté XPENG France.',
         url: 'https://discord.gg/xpengfrance',
         icon: 'https://cdn.simpleicons.org/discord/5865F2?v=1762981567074',
-        availability: ['europe'],
+        availability: ['global', 'europe', 'western_europe', 'france'],
         tags: ['Discord', 'Communauté'],
       },
     ],
