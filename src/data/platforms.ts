@@ -89,7 +89,7 @@ export const videoCategories: PlatformCategory[] = [
         name: 'XPENG IPTV Player',
         description: '🎯 Player IPTV intégré - M3U & Xtream avec sauvegarde automatique de vos identifiants.',
         url: 'https://dlnraja.github.io/xpengmedia/iptv-player.html',
-        icon: 'https://cdn-icons-png.flaticon.com/512/1384/1384060.png',
+        icon: 'https://cdn-icons-png.flaticon.com/512/3845/3845874.png',
         availability: ['global'],
         tags: ['IPTV', 'M3U', 'Xtream', 'XPENG Intégré'],
       },
