@@ -503,33 +503,7 @@ export const HomePage: React.FC = () => {
         ))}
       </motion.section>
 
-      {/* Toutes les plateformes en un bloc */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-        className="mt-16"
-      >
-        <div className="mb-6">
-          <h2 className="text-3xl font-bold text-slate-800 dark:text-white">
-            Toutes les plateformes ({getVisiblePlatforms(allPlatforms).length})
-          </h2>
-          <p className="mt-2 text-slate-600 dark:text-slate-400">
-            Vue d'ensemble complète de tous les services disponibles pour votre XPENG
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-5 gap-1.5 landscape:grid-cols-8 landscape:gap-2 md:grid-cols-6 md:gap-3 lg:grid-cols-8">
-          {getVisiblePlatforms(allPlatforms).map((platform) => (
-            <EditablePlatformCard
-              key={platform.id}
-              platform={platform}
-              isEditable={isEditMode}
-              onRemove={handleRemovePlatform}
-            />
-          ))}
-        </div>
-      </motion.section>
+      {/* Section "Toutes les plateformes" SUPPRIMÉE - Les catégories suffisent */}
 
       {/* Bouton flottant d'ajout */}
       <motion.button
