@@ -4,39 +4,39 @@ import type { PlatformLink } from '../data/platforms';
 import { regionsMetadata } from '../data/regionsMetadata';
 
 // Mapping des régions vers leurs groupes d'availability
+// IMPORTANT : utiliser uniquement des valeurs réellement présentes dans AvailabilityScope
+// pour garantir que le filtrage renvoie bien les bons services.
 const regionToAvailabilityMap: Record<Region, string[]> = {
-  'global': ['global'],
-  
-  // Europe Western
-  'france': ['global', 'europe', 'western_europe', 'france'],
-  'spain': ['global', 'europe', 'western_europe', 'spain'],
-  'italy': ['global', 'europe', 'western_europe', 'italy'],
-  'belgium': ['global', 'europe', 'western_europe', 'belgium'],
-  
-  // Europe Northern
-  'germany': ['global', 'europe', 'northern_europe', 'germany'],
-  'austria': ['global', 'europe', 'northern_europe', 'austria'],
-  'switzerland': ['global', 'europe', 'northern_europe', 'switzerland'],
-  'netherlands': ['global', 'europe', 'northern_europe', 'netherlands'],
-  
-  // Europe Nordic
-  'sweden': ['global', 'europe', 'nordic', 'sweden'],
-  'norway': ['global', 'europe', 'nordic', 'norway'],
-  'denmark': ['global', 'europe', 'nordic', 'denmark'],
-  
+  global: ['global'],
+
+  // Europe de l'Ouest
+  france: ['global', 'europe', 'western_europe', 'france'],
+  spain: ['global', 'europe', 'western_europe', 'spain'],
+  italy: ['global', 'europe', 'western_europe', 'italy'],
+  belgium: ['global', 'europe', 'western_europe'],
+
+  // Europe centre / nord
+  germany: ['global', 'europe', 'northern_europe', 'germany'],
+  austria: ['global', 'europe', 'northern_europe'],
+  switzerland: ['global', 'europe', 'northern_europe'],
+  netherlands: ['global', 'europe', 'northern_europe'],
+  sweden: ['global', 'europe', 'northern_europe'],
+  norway: ['global', 'europe', 'northern_europe'],
+  denmark: ['global', 'europe', 'northern_europe'],
+
   // Anglophones
-  'uk': ['global', 'europe', 'anglophone', 'uk'],
-  'usa': ['global', 'north_america', 'anglophone', 'usa'],
-  'australia': ['global', 'oceania', 'anglophone', 'australia'],
-  
+  uk: ['global', 'europe', 'anglophone', 'uk'],
+  usa: ['global', 'north-america', 'anglophone'],
+  australia: ['global', 'australia', 'anglophone'],
+
   // Asie
-  'china': ['global', 'asia', 'east_asia', 'china'],
-  'singapore': ['global', 'asia', 'southeast_asia', 'singapore'],
-  
+  china: ['global', 'asia', 'china'],
+  singapore: ['global', 'asia', 'anglophone'],
+
   // Moyen-Orient
-  'uae': ['global', 'middle_east', 'uae'],
-  'qatar': ['global', 'middle_east', 'qatar'],
-  'israel': ['global', 'middle_east', 'israel'],
+  uae: ['global', 'middle-east'],
+  qatar: ['global', 'middle-east'],
+  israel: ['global', 'middle-east'],
 };
 
 /**
