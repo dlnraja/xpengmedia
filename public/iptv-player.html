@@ -433,6 +433,81 @@
         #playerSection[data-layout="detail"] .media-card .category {
             opacity: 0.9;
         }
+
+        /* Vue mini-cards : ultra compacte, idéale en conduite (stationnement) */
+        #playerSection[data-layout="mini"] .channels-grid,
+        #playerSection[data-layout="mini"] .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 8px;
+        }
+
+        #playerSection[data-layout="mini"] .channel-card,
+        #playerSection[data-layout="mini"] .media-card {
+            padding: 8px 9px;
+            border-radius: 10px;
+        }
+
+        #playerSection[data-layout="mini"] .channel-card h3,
+        #playerSection[data-layout="mini"] .media-card .title {
+            font-size: 12px;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #playerSection[data-layout="mini"] .channel-card p,
+        #playerSection[data-layout="mini"] .media-card .category {
+            font-size: 11px;
+        }
+
+        #playerSection[data-layout="mini"] .media-card img {
+            display: none;
+        }
+
+        /* Mode EPG plein écran (body.epg-fullscreen) */
+        body.epg-fullscreen {
+            background: #020617;
+            overflow: hidden;
+        }
+
+        body.epg-fullscreen .container {
+            max-width: 100%;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        body.epg-fullscreen .header,
+        body.epg-fullscreen #setupSection,
+        body.epg-fullscreen .tabs,
+        body.epg-fullscreen #searchBox,
+        body.epg-fullscreen .view-switcher,
+        body.epg-fullscreen #currentPlaying,
+        body.epg-fullscreen #videoContainer,
+        body.epg-fullscreen #sectionLive,
+        body.epg-fullscreen #sectionMovies,
+        body.epg-fullscreen #sectionSeries,
+        body.epg-fullscreen #sectionFavorites,
+        body.epg-fullscreen #sectionHistory {
+            display: none !important;
+        }
+
+        body.epg-fullscreen #playerSection {
+            margin-top: 0;
+        }
+
+        body.epg-fullscreen #sectionEpg {
+            display: block !important;
+        }
+
+        body.epg-fullscreen #epgContainer {
+            margin: 0;
+            border-radius: 0;
+            border: none;
+            max-width: none;
+            height: 100vh;
+        }
     </style>
 </head>
 <body>
@@ -527,6 +602,12 @@
                 <button id="btnLayoutDetail" class="view-btn" onclick="setLayout('detail')">
                     ℹ️ Détail
                 </button>
+                <button id="btnLayoutMini" class="view-btn" onclick="setLayout('mini')">
+                    📚 Mini
+                </button>
+                <button id="btnEpgFullscreen" class="view-btn" onclick="toggleEpgFullscreen()">
+                    🧭 EPG plein écran
+                </button>
             </div>
 
             <div id="statusMessage"></div>
@@ -617,6 +698,7 @@
                 grid: document.getElementById('btnLayoutGrid'),
                 list: document.getElementById('btnLayoutList'),
                 detail: document.getElementById('btnLayoutDetail'),
+                mini: document.getElementById('btnLayoutMini'),
             };
 
             Object.entries(buttons).forEach(([key, btn]) => {
@@ -629,6 +711,20 @@
             });
 
             debugLog(`🔀 Layout changé: ${layout}`, 'info');
+        }
+
+        // Mode EPG plein écran (toggle sur le body)
+        function toggleEpgFullscreen() {
+            // Forcer l'onglet EPG actif
+            if (currentTab !== 'epg') {
+                switchTab('epg');
+            }
+            const isNowFull = document.body.classList.toggle('epg-fullscreen');
+            const btn = document.getElementById('btnEpgFullscreen');
+            if (btn) {
+                btn.textContent = isNowFull ? '⤵️ Quitter EPG plein écran' : '🧭 EPG plein écran';
+            }
+            debugLog(isNowFull ? '🧭 EPG plein écran activé' : '⤵️ EPG plein écran désactivé', 'info');
         }
         
         // Gestion des onglets

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>XPENG Web Notes</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: radial-gradient(circle at top, #020617 0, #020617 40%, #000 100%);
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .notes-container {
+      width: 100%;
+      max-width: 900px;
+      background: radial-gradient(circle at top left, rgba(56,189,248,0.25), transparent 55%),
+                  radial-gradient(circle at bottom right, rgba(34,197,94,0.18), transparent 55%),
+                  rgba(15,23,42,0.96);
+      border-radius: 24px;
+      border: 1px solid rgba(148,163,184,0.5);
+      box-shadow: 0 24px 80px rgba(15,23,42,0.95);
+      padding: 18px;
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #38bdf8;
+    }
+    .subtitle {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 2px;
+    }
+    .pill {
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      border: 1px solid rgba(148,163,184,0.5);
+      color: #cbd5f5;
+      background: rgba(15,23,42,0.9);
+      white-space: nowrap;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .toolbar-left {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      background: rgba(15,23,42,0.9);
+      color: #e5e7eb;
+      font-size: 11px;
+      padding: 6px 10px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover { border-color: #38bdf8; }
+    .btn:active { transform: translateY(1px) scale(0.99); }
+    .last-saved {
+      font-size: 10px;
+      color: #6b7280;
+      text-align: right;
+    }
+    .textarea {
+      margin-top: 6px;
+      flex: 1;
+      border-radius: 18px;
+      border: 1px solid rgba(55,65,81,0.9);
+      background: rgba(15,23,42,0.95);
+      padding: 14px 14px;
+      font-size: 14px;
+      color: #e5e7eb;
+      resize: none;
+      min-height: 260px;
+      outline: none;
+      box-shadow: inset 0 0 0 1px rgba(15,23,42,0.9);
+    }
+  </style>
+</head>
+<body>
+  <div class="notes-container">
+    <div>
+      <div class="header">
+        <div>
+          <div class="title">XPENG WEB NOTES</div>
+          <div class="subtitle">Bloc-notes persistant pour vos trajets (XPENG navigateur uniquement)</div>
+        </div>
+        <div class="pill">📝 Sauvegarde automatique</div>
+      </div>
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button class="btn" id="btnClear">🗑️ Effacer</button>
+          <button class="btn" id="btnInsertTime">⏱️ Horodatage</button>
+        </div>
+      </div>
+    </div>
+    <textarea id="notesArea" class="textarea" placeholder="Écrivez vos notes ici..."></textarea>
+    <div class="last-saved" id="lastSaved"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'xpeng_web_notes';
+    const notesArea = document.getElementById('notesArea');
+    const lastSavedEl = document.getElementById('lastSaved');
+
+    function formatDate(d) {
+      return new Date(d).toLocaleString('fr-FR');
+    }
+
+    function loadNotes() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        notesArea.value = parsed.text || '';
+        if (parsed.updatedAt) {
+          lastSavedEl.textContent = 'Dernière sauvegarde : ' + formatDate(parsed.updatedAt);
+        }
+      } catch (e) {
+        console.error('Erreur chargement notes', e);
+      }
+    }
+
+    function saveNotes() {
+      try {
+        const payload = {
+          text: notesArea.value,
+          updatedAt: Date.now(),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+        lastSavedEl.textContent = 'Dernière sauvegarde : ' + formatDate(payload.updatedAt);
+      } catch (e) {
+        console.error('Erreur sauvegarde notes', e);
+      }
+    }
+
+    let saveTimeout = null;
+    notesArea.addEventListener('input', () => {
+      if (saveTimeout) clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(saveNotes, 400);
+    });
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      if (!notesArea.value) return;
+      if (confirm('Effacer toutes les notes ?')) {
+        notesArea.value = '';
+        saveNotes();
+      }
+    });
+
+    document.getElementById('btnInsertTime').addEventListener('click', () => {
+      const now = formatDate(Date.now());
+      const prefix = notesArea.value ? '\n\n' : '';
+      notesArea.value += prefix + '[' + now + '] ';
+      saveNotes();
+    });
+
+    loadNotes();
+  </script>
+</body>
+</html>
