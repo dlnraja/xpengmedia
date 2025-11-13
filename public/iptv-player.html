@@ -190,6 +190,26 @@
             margin-bottom: 20px;
             border: 1px solid #06b6d4;
         }
+        
+        .debug-logs {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .debug-log-entry {
+            margin-bottom: 4px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .log-info { color: #06b6d4; }
+        .log-success { color: #22c55e; }
+        .log-warning { color: #f59e0b; }
+        .log-error { color: #ef4444; }
     </style>
 </head>
 <body>
@@ -246,6 +266,15 @@
             
             <div id="statusMessage"></div>
             
+            <!-- Zone de debug verbose -->
+            <div id="debugLogs" class="debug-logs hidden">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <strong>🔍 Logs de Debug</strong>
+                    <button onclick="clearDebugLogs()" style="padding: 4px 8px; font-size: 12px;">🗑️ Effacer</button>
+                </div>
+                <div id="debugContent" style="font-family: monospace; font-size: 11px; max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;"></div>
+            </div>
+            
             <div id="currentPlaying" class="current-playing hidden">
                 <strong>▶️ En cours :</strong> <span id="playingName">-</span>
             </div>
@@ -268,6 +297,31 @@
             loadSavedConfig();
         };
         
+        // Fonction pour logger de manière verbose
+        function debugLog(message, type = 'info') {
+            const debugContent = document.getElementById('debugContent');
+            const debugLogs = document.getElementById('debugLogs');
+            const timestamp = new Date().toLocaleTimeString('fr-FR');
+            
+            const entry = document.createElement('div');
+            entry.className = `debug-log-entry log-${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            
+            debugContent.appendChild(entry);
+            debugLogs.classList.remove('hidden');
+            
+            // Auto-scroll vers le bas
+            debugContent.scrollTop = debugContent.scrollHeight;
+            
+            // Aussi logger dans console
+            console.log(`[${type.toUpperCase()}]`, message);
+        }
+        
+        function clearDebugLogs() {
+            document.getElementById('debugContent').innerHTML = '';
+            document.getElementById('debugLogs').classList.add('hidden');
+        }
+        
         function updateFormFields() {
             const type = document.getElementById('connectionType').value;
             document.getElementById('m3uFields').classList.toggle('hidden', type !== 'm3u');
@@ -275,30 +329,87 @@
         }
         
         function saveAndConnect() {
+            clearDebugLogs();
+            debugLog('🚀 Démarrage de la connexion...', 'info');
+            
             const type = document.getElementById('connectionType').value;
+            debugLog(`📦 Type de connexion: ${type === 'm3u' ? 'M3U/M3U8' : 'Xtream Codes'}`, 'info');
+            
             let config = { type };
             
             if (type === 'm3u') {
-                config.url = document.getElementById('m3uUrl').value;
+                config.url = document.getElementById('m3uUrl').value.trim();
+                debugLog('⚙️ Validation des données M3U...', 'info');
+                
                 if (!config.url) {
-                    showStatus('Veuillez entrer une URL M3U', 'error');
+                    debugLog('❌ ERREUR: URL M3U vide', 'error');
+                    showStatus('❌ Veuillez entrer une URL M3U', 'error');
                     return;
                 }
+                
+                if (!config.url.startsWith('http://') && !config.url.startsWith('https://')) {
+                    debugLog('⚠️ ATTENTION: L\'URL ne commence pas par http:// ou https://', 'warning');
+                    debugLog(`URL fournie: ${config.url}`, 'warning');
+                }
+                
+                if (!config.url.includes('.m3u') && !config.url.includes('.m3u8')) {
+                    debugLog('⚠️ ATTENTION: L\'URL ne semble pas être un fichier M3U/M3U8', 'warning');
+                }
+                
+                debugLog(`✅ URL M3U valide: ${config.url}`, 'success');
+                
             } else {
-                config.url = document.getElementById('xtreamUrl').value;
-                config.username = document.getElementById('xtreamUsername').value;
-                config.password = document.getElementById('xtreamPassword').value;
-                if (!config.url || !config.username || !config.password) {
-                    showStatus('Veuillez remplir tous les champs', 'error');
+                config.url = document.getElementById('xtreamUrl').value.trim();
+                config.username = document.getElementById('xtreamUsername').value.trim();
+                config.password = document.getElementById('xtreamPassword').value.trim();
+                
+                debugLog('⚙️ Validation des données Xtream...', 'info');
+                
+                const missing = [];
+                if (!config.url) missing.push('URL serveur');
+                if (!config.username) missing.push('Nom d\'utilisateur');
+                if (!config.password) missing.push('Mot de passe');
+                
+                if (missing.length > 0) {
+                    debugLog(`❌ ERREUR: Champs manquants: ${missing.join(', ')}`, 'error');
+                    showStatus(`❌ Veuillez remplir: ${missing.join(', ')}`, 'error');
                     return;
+                }
+                
+                if (!config.url.startsWith('http://') && !config.url.startsWith('https://')) {
+                    debugLog('❌ ERREUR: L\'URL serveur doit commencer par http:// ou https://', 'error');
+                    debugLog(`URL fournie: ${config.url}`, 'error');
+                    showStatus('❌ URL serveur invalide (doit commencer par http:// ou https://)', 'error');
+                    return;
+                }
+                
+                if (config.url.endsWith('/')) {
+                    debugLog('⚠️ URL se termine par /, sera nettoyé automatiquement', 'warning');
+                }
+                
+                debugLog(`✅ URL serveur: ${config.url}`, 'success');
+                debugLog(`✅ Username: ${config.username}`, 'success');
+                debugLog(`✅ Password: ${'*'.repeat(config.password.length)} (${config.password.length} caractères)`, 'success');
+                
+                const specialChars = /[^a-zA-Z0-9_-]/;
+                if (specialChars.test(config.username)) {
+                    debugLog('⚠️ Username contient des caractères spéciaux, sera encodé', 'warning');
+                }
+                if (specialChars.test(config.password)) {
+                    debugLog('⚠️ Password contient des caractères spéciaux, sera encodé', 'warning');
                 }
             }
             
-            // Sauvegarder dans localStorage
-            localStorage.setItem('iptvConfig', JSON.stringify(config));
-            showStatus('✅ Configuration sauvegardée !', 'success');
+            try {
+                localStorage.setItem('iptvConfig', JSON.stringify(config));
+                debugLog('💾 Configuration sauvegardée dans localStorage', 'success');
+                showStatus('✅ Configuration sauvegardée !', 'success');
+            } catch (e) {
+                debugLog(`❌ ERREUR localStorage: ${e.message}`, 'error');
+                showStatus('⚠️ Configuration non sauvegardée (localStorage plein?)', 'warning');
+            }
             
-            // Charger les chaînes
+            debugLog('🚀 Lancement du chargement des chaînes...', 'info');
             loadChannels(config);
         }
         
@@ -389,25 +500,219 @@
         }
         
         async function loadXtream(config) {
-            showStatus('🔄 Connexion au serveur Xtream...', 'success');
+            debugLog('💉 loadXtream() appelé', 'info');
+            showStatus('🔄 Connexion au serveur Xtream Codes...', 'success');
             
-            const apiUrl = `${config.url}/player_api.php?username=${config.username}&password=${config.password}&action=get_live_streams`;
+            let serverUrl = config.url.trim();
+            debugLog(`🧹 URL originale: ${serverUrl}`, 'info');
+            
+            if (serverUrl.endsWith('/')) {
+                serverUrl = serverUrl.slice(0, -1);
+                debugLog(`🧹 URL nettoyée (/ retiré): ${serverUrl}`, 'info');
+            }
+            
+            const apiUrl = `${serverUrl}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}&action=get_live_streams`;
+            const safeApiUrl = apiUrl.replace(config.password, '***').replace(encodeURIComponent(config.password), '***');
+            
+            debugLog(`🔗 URL API construite: ${safeApiUrl}`, 'info');
+            
+            const startTime = Date.now();
             
             try {
-                const response = await fetch(apiUrl);
-                const data = await response.json();
+                debugLog('🔄 ÉTAPE 1/3: Tentative de connexion directe au serveur...', 'info');
+                showStatus('🔄 Étape 1/3: Connexion au serveur...', 'success');
                 
-                channels = data.map(ch => ({
-                    name: ch.name,
-                    url: `${config.url}/live/${config.username}/${config.password}/${ch.stream_id}.m3u8`,
-                    category: ch.category_name
-                }));
+                let response;
+                let data;
+                let usedProxy = false;
+                
+                try {
+                    debugLog(`🎯 Envoi requête GET vers le serveur...`, 'info');
+                    
+                    response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    
+                    const elapsed = Date.now() - startTime;
+                    debugLog(`⏱️ Réponse reçue en ${elapsed}ms`, 'info');
+                    debugLog(`📊 Status HTTP: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                    debugLog(`📦 Content-Type: ${response.headers.get('content-type')}`, 'info');
+                    
+                    if (!response.ok) {
+                        debugLog(`❌ Erreur HTTP ${response.status}`, 'error');
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const text = await response.text();
+                    debugLog(`📝 Longueur réponse: ${text.length} caractères`, 'info');
+                    debugLog(`📥 Aperçu réponse: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`, 'info');
+                    
+                    try {
+                        data = JSON.parse(text);
+                        debugLog(`✅ JSON parsé avec succès`, 'success');
+                    } catch (e) {
+                        debugLog(`❌ ERREUR parsing JSON: ${e.message}`, 'error');
+                        throw new Error('La réponse n\'est pas du JSON valide: ' + text.substring(0, 100));
+                    }
+                    
+                } catch (directError) {
+                    debugLog(`⚠️ Connexion directe échouée: ${directError.message}`, 'warning');
+                    debugLog(`🔄 ÉTAPE 2/3: Tentative avec proxy CORS...`, 'info');
+                    showStatus('🔄 Étape 2/3: Utilisation du proxy CORS...', 'success');
+                    
+                    const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                    const proxiedUrl = proxyUrl + encodeURIComponent(apiUrl);
+                    debugLog(`🌐 Proxy utilisé: api.allorigins.win`, 'info');
+                    
+                    try {
+                        response = await fetch(proxiedUrl);
+                        const elapsed = Date.now() - startTime;
+                        debugLog(`⏱️ Réponse proxy reçue en ${elapsed}ms`, 'info');
+                        
+                        const text = await response.text();
+                        debugLog(`📝 Longueur réponse proxy: ${text.length} caractères`, 'info');
+                        
+                        data = JSON.parse(text);
+                        usedProxy = true;
+                        debugLog(`✅ Connexion via proxy réussie`, 'success');
+                    } catch (proxyError) {
+                        debugLog(`❌ ERREUR proxy: ${proxyError.message}`, 'error');
+                        throw new Error(`Proxy aussi échoué: ${proxyError.message}`);
+                    }
+                }
+                
+                debugLog(`🔄 ÉTAPE 3/3: Analyse et traitement des données...`, 'info');
+                showStatus('🔄 Étape 3/3: Traitement des chaînes...', 'success');
+                
+                debugLog(`🔍 Type de données reçues: ${Array.isArray(data) ? 'Array' : typeof data}`, 'info');
+                
+                let streamsList = [];
+                
+                if (Array.isArray(data)) {
+                    streamsList = data;
+                    debugLog(`✅ Format détecté: Array direct de ${streamsList.length} éléments`, 'success');
+                } else if (data && typeof data === 'object') {
+                    debugLog(`🔍 Clés de l'objet: ${Object.keys(data).join(', ')}`, 'info');
+                    
+                    if (data.streams && Array.isArray(data.streams)) {
+                        streamsList = data.streams;
+                        debugLog(`✅ Format détecté: data.streams avec ${streamsList.length} chaînes`, 'success');
+                    } else if (data.data && Array.isArray(data.data)) {
+                        streamsList = data.data;
+                        debugLog(`✅ Format détecté: data.data avec ${streamsList.length} chaînes`, 'success');
+                    } else {
+                        if (data.user_info) {
+                            debugLog(`👤 Info utilisateur présente:`, 'info');
+                            debugLog(`   - Username: ${data.user_info.username || 'N/A'}`, 'info');
+                            debugLog(`   - Status: ${data.user_info.status || 'N/A'}`, 'info');
+                            debugLog(`   - Exp date: ${data.user_info.exp_date || 'N/A'}`, 'info');
+                            debugLog(`❌ Aucune chaîne disponible pour cet abonnement`, 'error');
+                            throw new Error('Aucune chaîne disponible pour cet abonnement');
+                        }
+                        debugLog(`❌ Format de réponse non reconnu`, 'error');
+                        throw new Error('Format de réponse inattendu: ' + JSON.stringify(data).substring(0, 100));
+                    }
+                } else {
+                    debugLog(`❌ Type de données invalide: ${typeof data}`, 'error');
+                    throw new Error('Données invalides reçues du serveur');
+                }
+                
+                if (streamsList.length === 0) {
+                    debugLog(`❌ Liste de chaînes vide`, 'error');
+                    throw new Error('Aucune chaîne trouvée sur ce serveur');
+                }
+                
+                debugLog(`✅ ${streamsList.length} chaînes trouvées dans la réponse`, 'success');
+                
+                if (streamsList.length > 0) {
+                    const first = streamsList[0];
+                    debugLog(`📦 Exemple 1ère chaîne:`, 'info');
+                    debugLog(`   - stream_id: ${first.stream_id || first.id || 'N/A'}`, 'info');
+                    debugLog(`   - name: ${first.name || first.stream_display_name || 'N/A'}`, 'info');
+                    debugLog(`   - category: ${first.category_name || first.category || 'N/A'}`, 'info');
+                }
+                
+                debugLog(`🛠️ Mapping des chaînes...`, 'info');
+                
+                channels = streamsList.map((ch, index) => {
+                    const streamId = ch.stream_id || ch.id || ch.num;
+                    const channelName = ch.name || ch.stream_display_name || ch.title || `Chaîne ${streamId}`;
+                    const categoryName = ch.category_name || ch.category || '';
+                    
+                    if (index < 3) {
+                        debugLog(`   [${index + 1}] ${channelName} (ID: ${streamId})`, 'info');
+                    }
+                    
+                    return {
+                        name: channelName,
+                        url: `${serverUrl}/live/${config.username}/${config.password}/${streamId}.m3u8`,
+                        category: categoryName,
+                        streamId: streamId
+                    };
+                });
+                
+                if (streamsList.length > 3) {
+                    debugLog(`   ... et ${streamsList.length - 3} autres chaînes`, 'info');
+                }
+                
+                const totalTime = Date.now() - startTime;
+                debugLog(`⏱️ Temps total de traitement: ${totalTime}ms`, 'success');
+                debugLog(`✅ ${channels.length} chaînes mappées avec succès`, 'success');
                 
                 displayChannels();
                 showPlayer();
-                showStatus(`✅ ${channels.length} chaînes chargées !`, 'success');
+                
+                const successMsg = `✅ ${channels.length} chaînes Xtream chargées ${usedProxy ? '(via proxy)' : '(direct)'} !`;
+                showStatus(successMsg, 'success');
+                debugLog(successMsg, 'success');
+                
             } catch (error) {
-                showStatus('❌ Erreur de connexion Xtream. Vérifiez vos identifiants.', 'error');
+                const totalTime = Date.now() - startTime;
+                debugLog(`❌ ERREUR FATALE après ${totalTime}ms`, 'error');
+                debugLog(`❌ Type d'erreur: ${error.name}`, 'error');
+                debugLog(`❌ Message: ${error.message}`, 'error');
+                
+                if (error.stack) {
+                    debugLog(`🔍 Stack trace:`, 'error');
+                    error.stack.split('\n').slice(0, 3).forEach(line => {
+                        debugLog(`   ${line.trim()}`, 'error');
+                    });
+                }
+                
+                let errorMessage = '❌ Erreur Xtream: ';
+                let userTip = '';
+                
+                if (error.message.includes('Failed to fetch')) {
+                    errorMessage += 'Impossible de contacter le serveur.';
+                    userTip = '💡 Vérifiez: 1) L\'URL du serveur, 2) Votre connexion Internet, 3) Le serveur est en ligne';
+                    debugLog(userTip, 'warning');
+                } else if (error.message.includes('HTTP 401') || error.message.includes('Unauthorized')) {
+                    errorMessage += 'Identifiants incorrects.';
+                    userTip = '💡 Vérifiez: 1) Nom d\'utilisateur correct, 2) Mot de passe correct, 3) Pas d\'espaces en trop';
+                    debugLog(userTip, 'warning');
+                } else if (error.message.includes('HTTP 403') || error.message.includes('Forbidden')) {
+                    errorMessage += 'Accès refusé.';
+                    userTip = '💡 Vérifiez: 1) Abonnement valide, 2) Pas expiré, 3) Connexions simultanées limitées';
+                    debugLog(userTip, 'warning');
+                } else if (error.message.includes('HTTP 404')) {
+                    errorMessage += 'Serveur introuvable.';
+                    userTip = '💡 Vérifiez: 1) URL complète avec port, 2) Pas de faute de frappe, 3) Serveur utilise bien Xtream API';
+                    debugLog(userTip, 'warning');
+                } else if (error.message.includes('JSON')) {
+                    errorMessage += 'Réponse invalide du serveur.';
+                    userTip = '💡 Le serveur ne semble pas être un serveur Xtream Codes valide';
+                    debugLog(userTip, 'warning');
+                } else if (error.message.includes('Aucune chaîne')) {
+                    errorMessage += error.message;
+                    userTip = '💡 Votre abonnement ne contient aucune chaîne live';
+                    debugLog(userTip, 'warning');
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showStatus(errorMessage, 'error');
+                debugLog(`💔 Échec total du chargement Xtream`, 'error');
             }
         }
         

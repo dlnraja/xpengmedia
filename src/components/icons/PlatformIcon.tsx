@@ -13,25 +13,25 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
   size = 'md',
   className = '',
 }) => {
-  // Tailles uniformes pour tous les contextes - RÉDUITES pour mobile
+  // Tailles uniformes pour tous les contextes - OPTIMISÉES pour lisibilité mobile
   const sizeClasses = {
-    sm: 'w-8 h-8 min-w-[2rem] min-h-[2rem]',      // 32px - COMPACT mobile
-    md: 'w-10 h-10 min-w-[2.5rem] min-h-[2.5rem]', // 40px - Normal
-    lg: 'w-12 h-12 min-w-[3rem] min-h-[3rem]',    // 48px - Grand
+    sm: 'w-10 h-10 min-w-[2.5rem] min-h-[2.5rem]',  // 40px - Lisible mobile
+    md: 'w-12 h-12 min-w-[3rem] min-h-[3rem]',     // 48px - Normal
+    lg: 'w-14 h-14 min-w-[3.5rem] min-h-[3.5rem]', // 56px - Grand
   };
   
   // Taille d'emoji fixe pour tous les contextes
   const emojiSize = {
-    sm: 'text-[1rem]',    // 16px - Plus petit
-    md: 'text-[1.25rem]', // 20px
-    lg: 'text-[1.5rem]',  // 24px
+    sm: 'text-[1.25rem]', // 20px - Visible
+    md: 'text-[1.5rem]',  // 24px
+    lg: 'text-[1.75rem]', // 28px
   };
 
   // Taille d'image pour logos réels (avec padding pour cohérence)
   const imageSize = {
-    sm: 'w-6 h-6',   // 24px - RÉDUIT pour mobile
-    md: 'w-8 h-8',   // 32px
-    lg: 'w-10 h-10', // 40px
+    sm: 'w-7 h-7',   // 28px - Optimal mobile
+    md: 'w-9 h-9',   // 36px
+    lg: 'w-11 h-11', // 44px
   };
 
   // Détecter si c'est une URL (logo) ou un emoji
