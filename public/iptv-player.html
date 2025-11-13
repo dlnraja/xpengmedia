@@ -339,26 +339,6 @@
             margin-bottom: 20px;
             border: 1px solid #06b6d4;
         }
-        
-        .debug-logs {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .debug-log-entry {
-            margin-bottom: 4px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            background: rgba(0, 0, 0, 0.2);
-        }
-        
-        .log-info { color: #06b6d4; }
-        .log-success { color: #22c55e; }
-        .log-warning { color: #f59e0b; }
-        .log-error { color: #ef4444; }
     </style>
 </head>
 <body>
@@ -436,15 +416,6 @@
             <input type="text" id="searchBox" class="search-box" placeholder="🔍 Rechercher..." onkeyup="filterContent()">
             
             <div id="statusMessage"></div>
-            
-            <!-- Zone de debug verbose -->
-            <div id="debugLogs" class="debug-logs hidden">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <strong>🔍 Logs de Debug</strong>
-                    <button onclick="clearDebugLogs()" style="padding: 4px 8px; font-size: 12px;">🗑️ Effacer</button>
-                </div>
-                <div id="debugContent" style="font-family: monospace; font-size: 11px; max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;"></div>
-            </div>
             
             <div id="currentPlaying" class="current-playing hidden">
                 <strong>▶️ En cours :</strong> <span id="playingName">-</span>
@@ -641,29 +612,17 @@
             return card;
         }
         
-        // Fonction pour logger de manière verbose
+        // Fonction pour logger dans la console uniquement
         function debugLog(message, type = 'info') {
-            const debugContent = document.getElementById('debugContent');
-            const debugLogs = document.getElementById('debugLogs');
             const timestamp = new Date().toLocaleTimeString('fr-FR');
+            const icon = {
+                'info': 'ℹ️',
+                'success': '✅',
+                'warning': '⚠️',
+                'error': '❌'
+            }[type] || 'ℹ️';
             
-            const entry = document.createElement('div');
-            entry.className = `debug-log-entry log-${type}`;
-            entry.textContent = `[${timestamp}] ${message}`;
-            
-            debugContent.appendChild(entry);
-            debugLogs.classList.remove('hidden');
-            
-            // Auto-scroll vers le bas
-            debugContent.scrollTop = debugContent.scrollHeight;
-            
-            // Aussi logger dans console
-            console.log(`[${type.toUpperCase()}]`, message);
-        }
-        
-        function clearDebugLogs() {
-            document.getElementById('debugContent').innerHTML = '';
-            document.getElementById('debugLogs').classList.add('hidden');
+            console.log(`${icon} [${timestamp}] ${message}`);
         }
         
         function updateFormFields() {
@@ -673,7 +632,6 @@
         }
         
         function saveAndConnect() {
-            clearDebugLogs();
             debugLog('🚀 Démarrage de la connexion...', 'info');
             
             const type = document.getElementById('connectionType').value;
