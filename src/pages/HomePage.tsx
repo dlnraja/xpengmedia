@@ -523,7 +523,51 @@ export const HomePage: React.FC = () => {
         ))}
       </motion.section>
 
-      {/* Section "Toutes les plateformes" SUPPRIMÉE - Les catégories suffisent */}
+      {/* Toutes les Apps */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
+        className="mt-4 md:mt-12"
+      >
+        <div className="mb-2 overflow-hidden rounded-xl border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-3 shadow-md backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6 md:shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="h-1 w-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 md:h-1 md:w-12" />
+                <h2 className="bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-sm font-bold text-transparent md:text-2xl lg:text-3xl">
+                  Toutes les Apps
+                </h2>
+              </div>
+              <p className="mt-1 ml-8 text-[11px] leading-tight text-slate-600 dark:text-slate-400 md:ml-0 md:mt-1 md:text-sm line-clamp-1">
+                L'intégralité de vos applications
+              </p>
+            </div>
+            <div className="flex flex-col items-end">
+              <div className="text-lg font-semibold text-slate-700 dark:text-slate-300 md:text-xl">
+                {visiblePlatforms.length}
+              </div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400 md:hidden">
+                apps
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-5 gap-1.5 landscape:grid-cols-8 landscape:gap-2 md:grid-cols-6 md:gap-3 lg:grid-cols-8">
+          {visiblePlatforms.map((platform) => (
+            <EditablePlatformCard
+              key={platform.id}
+              platform={platform}
+              isEditable={isEditMode}
+              onRemove={handleRemovePlatform}
+            />
+          ))}
+          {/* Cartes vides pour compléter la rangée de 5 */}
+          {Array.from({ length: (5 - (visiblePlatforms.length % 5)) % 5 }).map((_, i) => (
+            <div key={`empty-all-${i}`} className="invisible" />
+          ))}
+        </div>
+      </motion.section>
 
       {/* Bouton flottant d'ajout */}
       <motion.button
