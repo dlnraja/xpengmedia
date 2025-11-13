@@ -305,31 +305,21 @@ export const HomePage: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
-        className="mt-8 space-y-8 md:mt-12 md:space-y-10"
+        className="mt-4 space-y-4 md:mt-12 md:space-y-10"
       >
         {/* Vidéos - Toutes les sous-catégories */}
         {videoCategories.filter(category => getVisiblePlatforms(category.platforms).length > 0).map((category) => (
           <div key={category.id}>
-            <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-4 shadow-lg backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6">
-              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className={`h-1 w-8 rounded-full bg-gradient-to-r ${category.colorFrom} ${category.colorTo} md:w-12`} />
-                    <h2 className={`bg-gradient-to-r ${category.colorFrom} ${category.colorTo} bg-clip-text text-lg font-bold text-transparent md:text-2xl lg:text-3xl`}>
-                      {category.title}
-                    </h2>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 md:text-sm">
-                    {category.subtitle}
-                  </p>
-                  {category.highlight && (
-                    <span className="mt-2 inline-block rounded-full bg-cyan-500/10 px-2 py-0.5 text-[10px] font-semibold text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400 md:px-3 md:py-1 md:text-xs">
-                      ✨ {category.highlight}
-                    </span>
-                  )}
+            <div className="mb-1.5 overflow-hidden rounded-lg border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-2 shadow-sm backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6 md:shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 md:gap-3">
+                  <div className={`h-0.5 w-4 rounded-full bg-gradient-to-r ${category.colorFrom} ${category.colorTo} md:h-1 md:w-12`} />
+                  <h2 className={`bg-gradient-to-r ${category.colorFrom} ${category.colorTo} bg-clip-text text-sm font-bold text-transparent md:text-2xl lg:text-3xl`}>
+                    {category.title}
+                  </h2>
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 md:text-sm">
-                  {getVisiblePlatforms(category.platforms).length} services
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 md:text-sm">
+                  {getVisiblePlatforms(category.platforms).length}
                 </div>
               </div>
             </div>
@@ -349,26 +339,16 @@ export const HomePage: React.FC = () => {
         {/* Musique - Toutes les sous-catégories */}
         {musicCategories.filter(category => getVisiblePlatforms(category.platforms).length > 0).map((category) => (
           <div key={category.id}>
-            <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-4 shadow-lg backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6">
-              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className={`h-1 w-8 rounded-full bg-gradient-to-r ${category.colorFrom} ${category.colorTo} md:w-12`} />
-                    <h2 className={`bg-gradient-to-r ${category.colorFrom} ${category.colorTo} bg-clip-text text-lg font-bold text-transparent md:text-2xl lg:text-3xl`}>
-                      {category.title}
-                    </h2>
-                  </div>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 md:text-sm">
-                    {category.subtitle}
-                  </p>
-                  {category.highlight && (
-                    <span className="mt-2 inline-block rounded-full bg-pink-500/10 px-2 py-0.5 text-[10px] font-semibold text-pink-600 dark:bg-pink-500/20 dark:text-pink-400 md:px-3 md:py-1 md:text-xs">
-                      ✨ {category.highlight}
-                    </span>
-                  )}
+            <div className="mb-1.5 overflow-hidden rounded-lg border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-2 shadow-sm backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6 md:shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 md:gap-3">
+                  <div className={`h-0.5 w-4 rounded-full bg-gradient-to-r ${category.colorFrom} ${category.colorTo} md:h-1 md:w-12`} />
+                  <h2 className={`bg-gradient-to-r ${category.colorFrom} ${category.colorTo} bg-clip-text text-sm font-bold text-transparent md:text-2xl lg:text-3xl`}>
+                    {category.title}
+                  </h2>
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 md:text-sm">
-                  {getVisiblePlatforms(category.platforms).length} services
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 md:text-sm">
+                  {getVisiblePlatforms(category.platforms).length}
                 </div>
               </div>
             </div>
@@ -388,7 +368,7 @@ export const HomePage: React.FC = () => {
         {/* Jeux - Toutes les sous-catégories */}
         {gamesCategories.filter(category => getVisiblePlatforms(category.platforms).length > 0).map((category) => (
           <div key={category.id}>
-            <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-4 shadow-lg backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6">
+            <div className="mb-1.5 overflow-hidden rounded-lg border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-2 shadow-sm backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6 md:shadow-lg">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
                   <div className="flex items-center gap-2 md:gap-3">
@@ -427,7 +407,7 @@ export const HomePage: React.FC = () => {
         {/* Recharge - Toutes les sous-catégories */}
         {chargingCategories.filter(category => getVisiblePlatforms(category.platforms).length > 0).map((category) => (
           <div key={category.id}>
-            <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-4 shadow-lg backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6">
+            <div className="mb-1.5 overflow-hidden rounded-lg border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-2 shadow-sm backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6 md:shadow-lg">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
                   <div className="flex items-center gap-2 md:gap-3">
@@ -466,7 +446,7 @@ export const HomePage: React.FC = () => {
         {/* Autres Services - Toutes les sous-catégories */}
         {otherServicesCategories.filter(category => getVisiblePlatforms(category.platforms).length > 0).map((category) => (
           <div key={category.id}>
-            <div className="mb-3 overflow-hidden rounded-2xl border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-4 shadow-lg backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6">
+            <div className="mb-1.5 overflow-hidden rounded-lg border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-2 shadow-sm backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6 md:shadow-lg">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
                   <div className="flex items-center gap-2 md:gap-3">
