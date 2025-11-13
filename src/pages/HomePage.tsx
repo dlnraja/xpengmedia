@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FavoritesGrid } from '../components/favorites/FavoritesGrid';
 import { AddFavoriteModal } from '../components/favorites/AddFavoriteModal';
 import { SearchBar } from '../components/SearchBar';
-import { useFavorites } from '../context/FavoritesContext';
 import { PlusIcon, ArrowUpIcon, PlayIcon, MusicalNoteIcon, PuzzlePieceIcon, PencilIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { videoCategories, musicCategories, gamesCategories, chargingCategories, otherServicesCategories } from '../data/platforms';
@@ -21,7 +19,6 @@ import { PlatformIcon } from '../components/icons/PlatformIcon';
 import { filterPlatformsByRegion } from '../utils/regionFilter';
 
 export const HomePage: React.FC = () => {
-  const { categories, getFavoritesByCategory } = useFavorites();
   const { locale, t } = useLocale();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCustomUrlModalOpen, setIsCustomUrlModalOpen] = useState(false);
@@ -31,12 +28,6 @@ export const HomePage: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [hiddenPlatforms, setHiddenPlatforms] = useState<Set<string>>(new Set());
   const [customServices, setCustomServices] = useState<PlatformLink[]>([]);
-
-  // Catégories de favoris réellement utilisées (au moins un favori visible pour le pays courant)
-  const favoriteCategoriesWithItems = useMemo(
-    () => categories.filter((category) => getFavoritesByCategory(category).length > 0),
-    [categories, getFavoritesByCategory]
-  );
 
   // Sélection des plateformes populaires à afficher par défaut
   const allPlatformsRaw: PlatformLink[] = [
@@ -622,33 +613,6 @@ export const HomePage: React.FC = () => {
           <PlusIcon className="h-5 w-5 mr-2" />
           Ajouter un favori
         </button>
-      </motion.div>
-
-      {/* Afficher les favoris par catégorie */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="space-y-12"
-      >
-        <AnimatePresence>
-          {favoriteCategoriesWithItems.map((category, index) => (
-            <motion.div
-              key={category}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 * (index % 3) }}
-            >
-              <FavoritesGrid
-                category={category}
-                onAddClick={() => {
-                  setSelectedCategory(category);
-                  setIsAddModalOpen(true);
-                }}
-              />
-            </motion.div>
-          ))}
-        </AnimatePresence>
       </motion.div>
 
       {/* Modal d'ajout de favori */}
