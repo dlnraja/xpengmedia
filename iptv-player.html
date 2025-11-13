@@ -41,6 +41,155 @@
             -webkit-text-fill-color: transparent;
         }
         
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .tab.active {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+        
+        .media-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .media-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            border-color: rgba(6, 182, 212, 0.5);
+        }
+        
+        .media-card img {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #1e293b, #334155);
+        }
+        
+        .media-card .info {
+            padding: 12px;
+        }
+        
+        .media-card .title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .media-card .category {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        
+        .favorite-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .favorite-btn:hover {
+            background: rgba(239, 68, 68, 0.8);
+            transform: scale(1.1);
+        }
+        
+        .favorite-btn.active {
+            background: rgba(239, 68, 68, 0.9);
+        }
+        
+        .epg-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .epg-timeline {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 16px;
+        }
+        
+        .epg-program {
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #06b6d4;
+        }
+        
+        .epg-program.current {
+            border-left-color: #22c55e;
+            background: rgba(34, 197, 94, 0.1);
+        }
+        
+        .epg-time {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+        
+        .epg-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .epg-description {
+            font-size: 13px;
+            color: #cbd5e1;
+            line-height: 1.4;
+        }
+        
         .setup-form, .player-section {
             background: rgba(255, 255, 255, 0.08);
             padding: 30px;
@@ -258,11 +407,33 @@
         
         <div id="playerSection" class="player-section hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2>📺 Chaînes disponibles</h2>
+                <h2>📺 Contenu IPTV</h2>
                 <button class="btn-secondary" onclick="showSetup()">⚙️ Configuration</button>
             </div>
             
-            <input type="text" id="searchBox" class="search-box" placeholder="🔍 Rechercher une chaîne..." onkeyup="filterChannels()">
+            <!-- Onglets de navigation -->
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('live')" id="tabLive">
+                    📡 Direct TV
+                </div>
+                <div class="tab" onclick="switchTab('movies')" id="tabMovies">
+                    🎬 Films
+                </div>
+                <div class="tab" onclick="switchTab('series')" id="tabSeries">
+                    📺 Séries
+                </div>
+                <div class="tab" onclick="switchTab('epg')" id="tabEpg">
+                    📋 Guide (EPG)
+                </div>
+                <div class="tab" onclick="switchTab('favorites')" id="tabFavorites">
+                    ❤️ Favoris
+                </div>
+                <div class="tab" onclick="switchTab('history')" id="tabHistory">
+                    🕐 Historique
+                </div>
+            </div>
+            
+            <input type="text" id="searchBox" class="search-box" placeholder="🔍 Rechercher..." onkeyup="filterContent()">
             
             <div id="statusMessage"></div>
             
@@ -283,19 +454,192 @@
                 <video id="videoPlayer" controls autoplay></video>
             </div>
             
-            <div id="channelsList" class="channels-grid"></div>
+            <!-- Section Live TV -->
+            <div id="sectionLive" class="content-section">
+                <div id="channelsList" class="channels-grid"></div>
+            </div>
+            
+            <!-- Section Films -->
+            <div id="sectionMovies" class="content-section hidden">
+                <div id="moviesList" class="content-grid"></div>
+            </div>
+            
+            <!-- Section Séries -->
+            <div id="sectionSeries" class="content-section hidden">
+                <div id="seriesList" class="content-grid"></div>
+            </div>
+            
+            <!-- Section EPG -->
+            <div id="sectionEpg" class="content-section hidden">
+                <div id="epgContainer" class="epg-container">
+                    <h3 style="margin-bottom: 16px;">📋 Guide des programmes</h3>
+                    <div id="epgTimeline" class="epg-timeline"></div>
+                </div>
+            </div>
+            
+            <!-- Section Favoris -->
+            <div id="sectionFavorites" class="content-section hidden">
+                <div id="favoritesList" class="content-grid"></div>
+            </div>
+            
+            <!-- Section Historique -->
+            <div id="sectionHistory" class="content-section hidden">
+                <div id="historyList" class="content-grid"></div>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script>
+        // Variables globales
         let channels = [];
+        let movies = [];
+        let series = [];
+        let epgData = [];
+        let favorites = JSON.parse(localStorage.getItem('iptvFavorites') || '[]');
+        let history = JSON.parse(localStorage.getItem('iptvHistory') || '[]');
         let hls = null;
+        let currentTab = 'live';
         
         // Charger la configuration sauvegardée au démarrage
         window.onload = function() {
             loadSavedConfig();
+            loadFavorites();
+            loadHistory();
         };
+        
+        // Gestion des onglets
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // Mettre à jour les onglets actifs
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById('tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.add('active');
+            
+            // Masquer toutes les sections
+            document.querySelectorAll('.content-section').forEach(section => section.classList.add('hidden'));
+            
+            // Afficher la section active
+            document.getElementById('section' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.remove('hidden');
+            
+            // Charger le contenu si nécessaire
+            if (tabName === 'movies' && movies.length === 0) {
+                loadMovies();
+            } else if (tabName === 'series' && series.length === 0) {
+                loadSeries();
+            } else if (tabName === 'epg' && epgData.length === 0) {
+                loadEPG();
+            } else if (tabName === 'favorites') {
+                displayFavorites();
+            } else if (tabName === 'history') {
+                displayHistory();
+            }
+        }
+        
+        // Ajouter aux favoris
+        function toggleFavorite(item) {
+            const index = favorites.findIndex(f => f.url === item.url);
+            
+            if (index > -1) {
+                favorites.splice(index, 1);
+                debugLog(`❌ Retiré des favoris: ${item.name}`, 'info');
+            } else {
+                favorites.push({...item, addedAt: Date.now()});
+                debugLog(`✅ Ajouté aux favoris: ${item.name}`, 'success');
+            }
+            
+            localStorage.setItem('iptvFavorites', JSON.stringify(favorites));
+            
+            // Rafraîchir l'affichage
+            if (currentTab === 'favorites') {
+                displayFavorites();
+            }
+        }
+        
+        // Ajouter à l'historique
+        function addToHistory(item) {
+            // Retirer l'ancien si existe
+            history = history.filter(h => h.url !== item.url);
+            
+            // Ajouter au début
+            history.unshift({...item, watchedAt: Date.now()});
+            
+            // Garder seulement les 50 derniers
+            history = history.slice(0, 50);
+            
+            localStorage.setItem('iptvHistory', JSON.stringify(history));
+            debugLog(`📝 Ajouté à l'historique: ${item.name}`, 'info');
+        }
+        
+        // Charger et afficher favoris
+        function loadFavorites() {
+            favorites = JSON.parse(localStorage.getItem('iptvFavorites') || '[]');
+        }
+        
+        function displayFavorites() {
+            const container = document.getElementById('favoritesList');
+            container.innerHTML = '';
+            
+            if (favorites.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">Aucun favori. Ajoutez-en en cliquant sur ❤️</p>';
+                return;
+            }
+            
+            favorites.forEach(item => {
+                const card = createMediaCard(item, true);
+                container.appendChild(card);
+            });
+        }
+        
+        // Charger et afficher historique
+        function loadHistory() {
+            history = JSON.parse(localStorage.getItem('iptvHistory') || '[]');
+        }
+        
+        function displayHistory() {
+            const container = document.getElementById('historyList');
+            container.innerHTML = '';
+            
+            if (history.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">Aucun historique</p>';
+                return;
+            }
+            
+            history.forEach(item => {
+                const card = createMediaCard(item, false, true);
+                container.appendChild(card);
+            });
+        }
+        
+        // Créer une carte média (Films/Séries)
+        function createMediaCard(item, showFavorite = true, showDate = false) {
+            const card = document.createElement('div');
+            card.className = 'media-card';
+            card.style.position = 'relative';
+            
+            const isFav = favorites.some(f => f.url === item.url);
+            
+            card.innerHTML = `
+                ${showFavorite ? `<button class="favorite-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                    ${isFav ? '❤️' : '🤍'}
+                </button>` : ''}
+                <img src="${item.poster || 'https://via.placeholder.com/200x300/334155/f1f5f9?text=' + encodeURIComponent(item.name)}" 
+                     alt="${item.name}"
+                     onerror="this.src='https://via.placeholder.com/200x300/334155/f1f5f9?text=' + encodeURIComponent('${item.name}')">
+                <div class="info">
+                    <div class="title">${item.name}</div>
+                    <div class="category">${item.category || 'Divers'}</div>
+                    ${showDate && item.watchedAt ? `<div class="category">${new Date(item.watchedAt).toLocaleDateString('fr-FR')}</div>` : ''}
+                </div>
+            `;
+            
+            card.onclick = () => {
+                playChannel(item);
+                addToHistory(item);
+            };
+            
+            return card;
+        }
         
         // Fonction pour logger de manière verbose
         function debugLog(message, type = 'info') {
@@ -734,13 +1078,222 @@
             });
         }
         
-        function filterChannels() {
+        function filterContent() {
             const search = document.getElementById('searchBox').value.toLowerCase();
-            const cards = document.querySelectorAll('.channel-card');
+            const cards = document.querySelectorAll('.channel-card, .media-card');
             
             cards.forEach(card => {
                 const text = card.textContent.toLowerCase();
                 card.style.display = text.includes(search) ? 'block' : 'none';
+            });
+        }
+        
+        // Charger les films depuis Xtream
+        async function loadMovies() {
+            if (!channels.length) {
+                showStatus('⚠️ Chargez d\'abord les chaînes', 'warning');
+                return;
+            }
+            
+            debugLog('🎬 Chargement des films...', 'info');
+            showStatus('🔄 Chargement des films...', 'success');
+            
+            const config = JSON.parse(localStorage.getItem('iptvConfig'));
+            if (!config || config.type !== 'xtream') {
+                showStatus('⚠️ Les films nécessitent Xtream Codes', 'warning');
+                return;
+            }
+            
+            try {
+                let serverUrl = config.url.trim();
+                if (serverUrl.endsWith('/')) serverUrl = serverUrl.slice(0, -1);
+                
+                const apiUrl = `${serverUrl}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}&action=get_vod_streams`;
+                
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                movies = Array.isArray(data) ? data.map((m, i) => ({
+                    name: m.name || m.title || `Film ${i+1}`,
+                    url: `${serverUrl}/movie/${config.username}/${config.password}/${m.stream_id}.${m.container_extension || 'mp4'}`,
+                    category: m.category_name || 'Films',
+                    poster: m.stream_icon || m.cover_big || null,
+                    streamId: m.stream_id
+                })) : [];
+                
+                debugLog(`✅ ${movies.length} films chargés`, 'success');
+                displayMovies();
+            } catch (error) {
+                debugLog(`❌ Erreur chargement films: ${error.message}`, 'error');
+                showStatus('❌ Impossible de charger les films', 'error');
+            }
+        }
+        
+        function displayMovies() {
+            const container = document.getElementById('moviesList');
+            container.innerHTML = '';
+            
+            if (movies.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">Aucun film disponible</p>';
+                return;
+            }
+            
+            movies.forEach(movie => {
+                const card = createMediaCard(movie);
+                container.appendChild(card);
+            });
+        }
+        
+        // Charger les séries depuis Xtream
+        async function loadSeries() {
+            if (!channels.length) {
+                showStatus('⚠️ Chargez d\'abord les chaînes', 'warning');
+                return;
+            }
+            
+            debugLog('📺 Chargement des séries...', 'info');
+            showStatus('🔄 Chargement des séries...', 'success');
+            
+            const config = JSON.parse(localStorage.getItem('iptvConfig'));
+            if (!config || config.type !== 'xtream') {
+                showStatus('⚠️ Les séries nécessitent Xtream Codes', 'warning');
+                return;
+            }
+            
+            try {
+                let serverUrl = config.url.trim();
+                if (serverUrl.endsWith('/')) serverUrl = serverUrl.slice(0, -1);
+                
+                const apiUrl = `${serverUrl}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}&action=get_series`;
+                
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                series = Array.isArray(data) ? data.map((s, i) => ({
+                    name: s.name || s.title || `Série ${i+1}`,
+                    url: `${serverUrl}/series/${config.username}/${config.password}/${s.series_id}.m3u8`,
+                    category: s.category_name || 'Séries',
+                    poster: s.cover || s.cover_big || null,
+                    seriesId: s.series_id
+                })) : [];
+                
+                debugLog(`✅ ${series.length} séries chargées`, 'success');
+                displaySeries();
+            } catch (error) {
+                debugLog(`❌ Erreur chargement séries: ${error.message}`, 'error');
+                showStatus('❌ Impossible de charger les séries', 'error');
+            }
+        }
+        
+        function displaySeries() {
+            const container = document.getElementById('seriesList');
+            container.innerHTML = '';
+            
+            if (series.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">Aucune série disponible</p>';
+                return;
+            }
+            
+            series.forEach(serie => {
+                const card = createMediaCard(serie);
+                container.appendChild(card);
+            });
+        }
+        
+        // Charger l'EPG (Electronic Program Guide)
+        async function loadEPG() {
+            debugLog('📋 Chargement de l\'EPG...', 'info');
+            showStatus('🔄 Chargement du guide des programmes...', 'success');
+            
+            const config = JSON.parse(localStorage.getItem('iptvConfig'));
+            
+            try {
+                // Générer un EPG fictif avec horaires réalistes
+                const now = new Date();
+                epgData = channels.slice(0, 10).flatMap((channel, index) => {
+                    const programs = [];
+                    let startTime = new Date(now);
+                    startTime.setHours(6, 0, 0, 0);
+                    
+                    const programTemplates = [
+                        { title: 'Journal du matin', duration: 30 },
+                        { title: 'Météo', duration: 15 },
+                        { title: 'Magazine', duration: 60 },
+                        { title: 'Film', duration: 120 },
+                        { title: 'Série', duration: 45 },
+                        { title: 'Documentaire', duration: 60 },
+                        { title: 'Journal du soir', duration: 30 },
+                        { title: 'Divertissement', duration: 90 }
+                    ];
+                    
+                    for (let i = 0; i < 8; i++) {
+                        const template = programTemplates[i];
+                        const endTime = new Date(startTime.getTime() + template.duration * 60000);
+                        const isCurrent = now >= startTime && now < endTime;
+                        
+                        programs.push({
+                            channel: channel.name,
+                            title: template.title,
+                            start: startTime.toISOString(),
+                            end: endTime.toISOString(),
+                            description: `${template.title} sur ${channel.name}`,
+                            isCurrent: isCurrent
+                        });
+                        
+                        startTime = new Date(endTime);
+                    }
+                    
+                    return programs;
+                });
+                
+                debugLog(`✅ EPG généré: ${epgData.length} programmes`, 'success');
+                displayEPG();
+            } catch (error) {
+                debugLog(`❌ Erreur chargement EPG: ${error.message}`, 'error');
+                showStatus('❌ Impossible de charger l\'EPG', 'error');
+            }
+        }
+        
+        function displayEPG() {
+            const container = document.getElementById('epgTimeline');
+            container.innerHTML = '';
+            
+            if (epgData.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">Aucun programme disponible</p>';
+                return;
+            }
+            
+            // Grouper par chaîne
+            const byChannel = {};
+            epgData.forEach(prog => {
+                if (!byChannel[prog.channel]) byChannel[prog.channel] = [];
+                byChannel[prog.channel].push(prog);
+            });
+            
+            // Afficher les programmes actuels et à venir
+            Object.entries(byChannel).forEach(([channel, programs]) => {
+                const now = new Date();
+                const upcoming = programs.filter(p => new Date(p.start) >= now).slice(0, 3);
+                
+                upcoming.forEach(prog => {
+                    const card = document.createElement('div');
+                    card.className = `epg-program ${prog.isCurrent ? 'current' : ''}`;
+                    
+                    const start = new Date(prog.start);
+                    const end = new Date(prog.end);
+                    
+                    card.innerHTML = `
+                        <div class="epg-time">
+                            ${start.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})} - 
+                            ${end.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}
+                            ${prog.isCurrent ? '<span style="color: #22c55e; margin-left: 8px;">● EN DIRECT</span>' : ''}
+                        </div>
+                        <div class="epg-title">${prog.title}</div>
+                        <div class="epg-description">${channel}</div>
+                    `;
+                    
+                    container.appendChild(card);
+                });
             });
         }
         
