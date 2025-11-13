@@ -8,6 +8,7 @@ import {
   Cog6ToothIcon,
   MapPinIcon,
   SparklesIcon,
+  Squares2X2Icon,
 } from '@heroicons/react/24/outline';
 
 type NavItem = {
@@ -22,6 +23,7 @@ const navItems: NavItem[] = [
   { name: 'Musique', icon: <MusicalNoteIcon className="h-6 w-6" />, path: '/music' },
   { name: 'Jeux', icon: <PuzzlePieceIcon className="h-6 w-6" />, path: '/games' },
   { name: 'Recharge', icon: <MapPinIcon className="h-6 w-6" />, path: '/charging' },
+  { name: 'Tous les services', icon: <Squares2X2Icon className="h-6 w-6" />, path: '/all-services' },
   { name: 'Autres', icon: <SparklesIcon className="h-6 w-6" />, path: '/other-services' },
   { name: 'Paramètres', icon: <Cog6ToothIcon className="h-6 w-6" />, path: '/settings' },
 ];

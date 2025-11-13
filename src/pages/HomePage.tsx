@@ -482,26 +482,26 @@ export const HomePage: React.FC = () => {
         {/* Autres Services - Toutes les sous-catégories */}
         {otherServicesCategories.filter(category => getVisiblePlatforms(category.platforms).length > 0).map((category) => (
           <div key={category.id}>
-            <div className="mb-1.5 overflow-hidden rounded-lg border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-2 shadow-sm backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6 md:shadow-lg">
-              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <div>
+            <div className="mb-2 overflow-hidden rounded-xl border border-slate-200/70 bg-gradient-to-br from-white/90 to-slate-50/80 p-3 shadow-md backdrop-blur-xl dark:border-slate-800/70 dark:from-slate-900/70 dark:to-slate-950/50 md:mb-4 md:rounded-3xl md:p-6 md:shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
                   <div className="flex items-center gap-2 md:gap-3">
-                    <div className={`h-1 w-8 rounded-full bg-gradient-to-r ${category.colorFrom} ${category.colorTo} md:w-12`} />
-                    <h2 className={`bg-gradient-to-r ${category.colorFrom} ${category.colorTo} bg-clip-text text-lg font-bold text-transparent md:text-2xl lg:text-3xl`}>
+                    <div className={`h-1 w-6 rounded-full bg-gradient-to-r ${category.colorFrom} ${category.colorTo} md:h-1 md:w-12`} />
+                    <h2 className={`bg-gradient-to-r ${category.colorFrom} ${category.colorTo} bg-clip-text text-sm font-bold text-transparent md:text-2xl lg:text-3xl`}>
                       {category.title}
                     </h2>
                   </div>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400 md:text-sm">
+                  <p className="mt-1 ml-8 text-[11px] leading-tight text-slate-600 dark:text-slate-400 md:ml-0 md:mt-1 md:text-sm line-clamp-1">
                     {category.subtitle}
                   </p>
-                  {category.highlight && (
-                    <span className="mt-2 inline-block rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400 md:px-3 md:py-1 md:text-xs">
-                      ✨ {category.highlight}
-                    </span>
-                  )}
                 </div>
-                <div className="text-xs text-slate-500 dark:text-slate-400 md:text-sm">
-                  {getVisiblePlatforms(category.platforms).length} services
+                <div className="flex flex-col items-end">
+                  <div className="text-lg font-semibold text-slate-700 dark:text-slate-300 md:text-xl">
+                    {getVisiblePlatforms(category.platforms).length}
+                  </div>
+                  <div className="text-[10px] text-slate-500 dark:text-slate-400 md:hidden">
+                    apps
+                  </div>
                 </div>
               </div>
             </div>

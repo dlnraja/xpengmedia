@@ -90,7 +90,7 @@ export const PlatformCategorySection: React.FC<PlatformCategorySectionProps> = (
 
   return (
     <section className="relative overflow-hidden rounded-4xl border border-slate-100/10 bg-gradient-to-br p-[1px] shadow-[0_40px_80px_-24px_rgba(15,23,42,0.35)]">
-      <div className={`relative rounded-[calc(2rem-1px)] bg-gradient-to-br ${category.colorFrom} ${category.colorTo} p-8 md:p-10`}> 
+      <div className={`relative rounded-[calc(2rem-1px)] bg-gradient-to-br ${category.colorFrom} ${category.colorTo} p-8 md:p-10`}>
         <div className="max-w-4xl text-white">
           <motion.h3
             initial={{ opacity: 0, y: 10 }}
@@ -100,9 +100,18 @@ export const PlatformCategorySection: React.FC<PlatformCategorySectionProps> = (
           >
             {category.title}
           </motion.h3>
-          <p className="mt-3 text-base md:text-lg text-white/80">
-            {category.subtitle}
-          </p>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-base md:text-lg text-white/80 md:max-w-xl">
+              {category.subtitle}
+            </p>
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white/90">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300" />
+              <span>
+                {visiblePlatforms.length}{' '}
+                {visiblePlatforms.length > 1 ? 'services disponibles' : 'service disponible'}
+              </span>
+            </div>
+          </div>
           {category.highlight && (
             <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm">
               <SparklesIcon className="h-4 w-4" />

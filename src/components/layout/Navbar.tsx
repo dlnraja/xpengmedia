@@ -29,6 +29,7 @@ export const Navbar: React.FC = () => {
             { nameKey: 'music', path: '/music' },
             { nameKey: 'games', path: '/games' },
             { nameKey: 'charging', path: '/charging' },
+            { nameKey: 'allServices', path: '/all-services' },
             { nameKey: 'others', path: '/other-services' },
           ].map((item) => (
             <NavLink
