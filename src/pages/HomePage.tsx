@@ -41,6 +41,11 @@ export const HomePage: React.FC = () => {
   // Filtrer par région avec le système intelligent
   const allPlatforms = filterPlatformsByRegion(allPlatformsRaw, locale.region);
 
+  // Plateformes visibles globalement (filtrage par région + apps masquées)
+  const visiblePlatforms: PlatformLink[] = allPlatforms.filter(
+    (p) => !hiddenPlatforms.has(p.id)
+  );
+
   // Hook de favoris intelligents
   const { smartFavorites, trackClick, hasUsageData } = useSmartFavorites(allPlatforms);
 
