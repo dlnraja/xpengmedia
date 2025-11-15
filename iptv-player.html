@@ -1910,7 +1910,84 @@
                     video.src = channel.url;
                     video.play().catch(e => {
                         debugLog(`❌ Erreur lecture native: ${e.message}`, 'error');
-                        showStatus('❌ Impossible de lire ce flux HLS (lecture native)', 'error');
+                        showStatus('❌ Impossible de lire ce flux HLS (lecture native). Tentative automatique via HLS.js...', 'error');
+
+                        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                            debugLog('🔁 Fallback automatique: tentative de lecture via HLS.js après échec natif', 'warning');
+
+                            if (hls) {
+                                try {
+                                    hls.destroy();
+                                } catch (_) {}
+                                hls = null;
+                            }
+
+                            const hlsConfig = {
+                                enableWorker: true,
+                                lowLatencyMode: false,
+                                backBufferLength: 90,
+                                maxBufferLength: 30,
+                                maxMaxBufferLength: 60,
+                                maxBufferSize: 60 * 1000 * 1000,
+                                maxBufferHole: 0.5,
+                                highBufferWatchdogPeriod: 2,
+                                nudgeOffset: 0.1,
+                                nudgeMaxRetry: 3,
+                                maxFragLookUpTolerance: 0.25,
+                                liveSyncDurationCount: 3,
+                                liveMaxLatencyDurationCount: 10,
+                                liveDurationInfinity: false,
+                                preferManagedMediaSource: false,
+                                abrEwmaDefaultEstimate: 500000
+                            };
+
+                            try {
+                                hls = new Hls(hlsConfig);
+
+                                hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+                                    debugLog('📺 HLS (fallback) attaché au player', 'success');
+                                });
+
+                                hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                                    debugLog(`✅ Manifest (fallback) parsé: ${data.levels.length} qualités disponibles`, 'success');
+                                    video.play().catch(err2 => {
+                                        debugLog(`❌ Erreur autoplay après fallback HLS.js: ${err2.message}`, 'error');
+                                        showStatus('❌ Lecture automatique bloquée après fallback HLS.js. Essayez d\'appuyer sur ▶️ dans la vidéo.', 'error');
+                                    });
+                                });
+
+                                hls.on(Hls.Events.ERROR, (event, data) => {
+                                    if (data.fatal) {
+                                        debugLog(`❌ Erreur HLS (fallback) fatale: ${data.type} - ${data.details}`, 'error');
+                                        showStatus('❌ Erreur HLS fatale après fallback: ' + (data.details || data.type), 'error');
+                                        switch (data.type) {
+                                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                                debugLog('🔄 Tentative de récupération réseau (fallback)...', 'warning');
+                                                hls.startLoad();
+                                                break;
+                                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                                debugLog('🔄 Tentative de récupération média (fallback)...', 'warning');
+                                                hls.recoverMediaError();
+                                                break;
+                                            default:
+                                                debugLog('💔 Impossible de récupérer après fallback, destruction HLS', 'error');
+                                                hls.destroy();
+                                                break;
+                                        }
+                                    } else {
+                                        debugLog(`⚠️ Erreur HLS (fallback) non-fatale: ${data.details}`, 'warning');
+                                    }
+                                });
+
+                                hls.loadSource(channel.url);
+                                hls.attachMedia(video);
+                            } catch (fallbackError) {
+                                debugLog(`❌ Fallback HLS.js en échec: ${fallbackError.message}`, 'error');
+                                showStatus('❌ La lecture a échoué en mode natif et via HLS.js. Flux probablement non compatible avec ce navigateur.', 'error');
+                            }
+                        } else {
+                            debugLog('❌ Aucun fallback HLS.js disponible sur ce navigateur', 'error');
+                        }
                     });
                 }
                 // Sinon utiliser HLS.js (Chrome, Firefox, etc.)
