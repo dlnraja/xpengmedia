@@ -1838,7 +1838,26 @@
             playingName.textContent = channel.name;
             
             debugLog(`🎬 Lecture de: ${channel.name}`, 'info');
+
+            // Vérifier que l'objet canal est valide
+            if (!channel || !channel.url) {
+                debugLog('❌ Objet canal invalide ou URL manquante', 'error');
+                showStatus('❌ Impossible de lancer ce contenu (URL manquante)', 'error');
+                return;
+            }
+
             debugLog(`🔗 URL: ${channel.url.substring(0, 80)}...`, 'info');
+
+            // Détecter un possible blocage "mixed content" (page HTTPS, flux HTTP)
+            try {
+                if (window.location && window.location.protocol === 'https:' && channel.url.startsWith('http://')) {
+                    debugLog('⚠️ Mixed content détecté: page HTTPS mais flux HTTP', 'warning');
+                    showStatus('⚠️ Le flux utilise HTTP alors que la page est chargée en HTTPS. Le navigateur peut bloquer la vidéo. Essayez d\'ouvrir le player en HTTP ou d\'utiliser un serveur Xtream en HTTPS.', 'warning');
+                }
+            } catch (e) {
+                // Ne jamais casser la lecture à cause d'un simple check d'environnement
+                debugLog(`⚠️ Erreur pendant la détection mixed content: ${e.message}`, 'warning');
+            }
             
             // Arrêter HLS précédent
             if (hls) {
@@ -1862,10 +1881,11 @@
                     video.src = channel.url;
                     video.play().catch(e => {
                         debugLog(`❌ Erreur lecture native: ${e.message}`, 'error');
+                        showStatus('❌ Impossible de lire ce flux HLS (lecture native)', 'error');
                     });
                 }
                 // Sinon utiliser HLS.js (Chrome, Firefox, etc.)
-                else if (Hls.isSupported()) {
+                else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
                     debugLog('✅ Utilisation de HLS.js', 'success');
                     
                     // Configuration optimisée pour Android/XPENG (hardware decode)
@@ -1899,12 +1919,14 @@
                         debugLog(`✅ Manifest parsé: ${data.levels.length} qualités disponibles`, 'success');
                         video.play().catch(e => {
                             debugLog(`❌ Erreur autoplay: ${e.message}`, 'error');
+                            showStatus('❌ Lecture automatique bloquée par le navigateur. Essayez d\'appuyer sur ▶️ dans la vidéo.', 'error');
                         });
                     });
                     
                     hls.on(Hls.Events.ERROR, (event, data) => {
                         if (data.fatal) {
                             debugLog(`❌ Erreur HLS fatale: ${data.type} - ${data.details}`, 'error');
+                            showStatus('❌ Erreur HLS fatale: ' + (data.details || data.type), 'error');
                             switch (data.type) {
                                 case Hls.ErrorTypes.NETWORK_ERROR:
                                     debugLog('🔄 Tentative de récupération réseau...', 'warning');
@@ -1927,8 +1949,8 @@
                     hls.loadSource(channel.url);
                     hls.attachMedia(video);
                 } else {
-                    debugLog('❌ HLS non supporté par ce navigateur', 'error');
-                    showStatus('❌ Format HLS non supporté par votre navigateur', 'error');
+                    debugLog('❌ HLS non supporté ou Hls.js non chargé dans ce navigateur', 'error');
+                    showStatus('❌ HLS non supporté ou Hls.js non chargé sur ce navigateur', 'error');
                 }
             } 
             // Formats directs (MP4, WebM, etc.)
