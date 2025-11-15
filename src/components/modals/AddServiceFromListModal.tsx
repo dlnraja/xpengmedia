@@ -142,10 +142,10 @@ export const AddServiceFromListModal: React.FC<AddServiceFromListModalProps> = (
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.9 }}
                     onClick={() => handleAddService(service)}
-                    className="group relative flex flex-col items-center gap-2 rounded-xl border border-slate-200/70 bg-white p-3 shadow-sm transition-all hover:scale-105 hover:border-cyan-400 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/70 dark:hover:border-cyan-500"
+                    className="group relative flex flex-col items-center gap-2.5 rounded-xl border border-slate-200/70 bg-white p-3.5 shadow-sm transition-all hover:scale-105 hover:border-cyan-400 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/70 dark:hover:border-cyan-500"
                   >
-                    <PlatformIcon icon={service.icon} name={service.name} size="sm" />
-                    <span className="text-center text-xs font-semibold text-slate-800 line-clamp-2 dark:text-white">
+                    <PlatformIcon icon={service.icon} name={service.name} size="md" />
+                    <span className="text-center text-sm font-semibold text-slate-800 line-clamp-2 dark:text-white">
                       {service.name}
                     </span>
                   </motion.button>

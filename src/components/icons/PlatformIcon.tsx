@@ -15,23 +15,23 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
 }) => {
   // Tailles RÉDUITES pour mobile Z50S Pro (grille 5 colonnes)
   const sizeClasses = {
-    sm: 'w-9 h-9 min-w-[2.25rem] min-h-[2.25rem]',  // 36px - Compact mobile
-    md: 'w-11 h-11 min-w-[2.75rem] min-h-[2.75rem]',     // 44px - Normal
-    lg: 'w-13 h-13 min-w-[3.25rem] min-h-[3.25rem]', // 52px - Grand
+    sm: 'w-11 h-11 min-w-[2.75rem] min-h-[2.75rem]',  // 44px - Compact mobile
+    md: 'w-13 h-13 min-w-[3.25rem] min-h-[3.25rem]',  // 52px - Normal
+    lg: 'w-16 h-16 min-w-[4rem] min-h-[4rem]',        // 64px - Grand
   };
   
   // Taille d'emoji réduite pour mobile
   const emojiSize = {
-    sm: 'text-[1.125rem]', // 18px - Compact
-    md: 'text-[1.375rem]',  // 22px
-    lg: 'text-[1.625rem]', // 26px
+    sm: 'text-[1.375rem]', // 22px - Compact
+    md: 'text-[1.625rem]', // 26px
+    lg: 'text-[1.875rem]', // 30px
   };
 
   // Taille d'image pour logos réels - réduite mobile
   const imageSize = {
-    sm: 'w-6 h-6',   // 24px - Compact mobile
-    md: 'w-8 h-8',   // 32px
-    lg: 'w-10 h-10', // 40px
+    sm: 'w-8 h-8',   // 32px - Compact mobile
+    md: 'w-10 h-10', // 40px
+    lg: 'w-12 h-12', // 48px
   };
 
   // Détecter si c'est une URL (logo) ou un emoji
