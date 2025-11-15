@@ -1231,20 +1231,32 @@
                 const text = await response.text();
                 
                 channels = parseM3U(text);
+                debugLog(`📥 Playlist M3U chargée via ${url.startsWith('http://') ? 'proxy CORS' : 'connexion directe'} — ${channels.length} chaînes détectées`, channels.length ? 'success' : 'warning');
                 displayChannels();
                 showPlayer();
-                showStatus(`✅ ${channels.length} chaînes chargées !`, 'success');
+                if (!channels.length) {
+                    showStatus('⚠️ Playlist chargée, mais aucune chaîne n\'a été détectée. Vérifiez le contenu du fichier M3U.', 'warning');
+                } else {
+                    showStatus(`✅ ${channels.length} chaînes chargées !`, 'success');
+                }
             } catch (error) {
                 // Si CORS proxy échoue, essayer direct
+                debugLog(`⚠️ Échec du chargement M3U via proxy (${error.message}). Tentative directe...`, 'warning');
                 try {
                     const response = await fetch(url);
                     const text = await response.text();
                     channels = parseM3U(text);
+                    debugLog(`📥 Playlist M3U chargée en direct — ${channels.length} chaînes détectées`, channels.length ? 'success' : 'warning');
                     displayChannels();
                     showPlayer();
-                    showStatus(`✅ ${channels.length} chaînes chargées !`, 'success');
+                    if (!channels.length) {
+                        showStatus('⚠️ Playlist chargée, mais aucune chaîne n\'a été détectée. Vérifiez le contenu du fichier M3U.', 'warning');
+                    } else {
+                        showStatus(`✅ ${channels.length} chaînes chargées !`, 'success');
+                    }
                 } catch (err) {
-                    showStatus('❌ Impossible de charger la playlist. Vérifiez l\'URL.', 'error');
+                    debugLog(`❌ Impossible de charger la playlist M3U: ${err.message}`, 'error');
+                    showStatus('❌ Impossible de charger la playlist. Vérifiez l\'URL ou le serveur.', 'error');
                 }
             }
         }
@@ -1575,9 +1587,22 @@
         
         function displayChannels() {
             const container = document.getElementById('channelsList');
+            if (!container) {
+                debugLog('❌ Conteneur "channelsList" introuvable, impossible d\'afficher les chaînes', 'error');
+                return;
+            }
+
             container.innerHTML = '';
+
+            if (!Array.isArray(channels) || channels.length === 0) {
+                debugLog('⚠️ Aucune chaîne à afficher (liste vide)', 'warning');
+                container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 24px;">Aucune chaîne disponible pour cette playlist ou ce serveur.</p>';
+                return;
+            }
+
+            debugLog(`📺 Affichage de ${channels.length} chaînes dans la grille`, 'info');
             
-            channels.forEach((channel) => {
+            channels.forEach((channel, index) => {
                 const card = document.createElement('div');
                 card.className = 'channel-card';
 
@@ -1587,6 +1612,10 @@
                     url: channel.url,
                     category: channel.category || 'Live'
                 };
+
+                if (index < 3) {
+                    debugLog(`   [${index + 1}] ${item.name} -> ${item.url.substring(0, 80)}...`, 'info');
+                }
 
                 const isFav = favorites.some(f => f.url === item.url);
                 const safeItem = JSON.stringify(item).replace(/"/g, '&quot;');
@@ -1969,7 +1998,25 @@
             video.addEventListener('playing', () => debugLog('▶️ Lecture en cours', 'success'), { once: true });
             video.addEventListener('waiting', () => debugLog('⏸️ Buffering...', 'warning'), { once: true });
             video.addEventListener('error', (e) => {
-                debugLog(`❌ Erreur vidéo: ${e.target.error?.message || 'Unknown'}`, 'error');
+                const mediaError = e.target && e.target.error ? e.target.error : null;
+                const code = mediaError && typeof mediaError.code === 'number' ? mediaError.code : null;
+                const message = mediaError && mediaError.message ? mediaError.message : 'Unknown';
+
+                debugLog(`❌ Erreur vidéo: code=${code !== null ? code : 'N/A'}, message="${message}"`, 'error');
+
+                if (code === 4) { // MEDIA_ERR_SRC_NOT_SUPPORTED
+                    debugLog('❌ Flux non compatible: format ou codec non supporté par le navigateur', 'error');
+                    showStatus('❌ Le flux vidéo n\'est pas compatible avec ce navigateur (format ou codec non supporté). Essayez un autre flux ou contactez votre fournisseur IPTV.', 'error');
+                } else if (code === 3) { // MEDIA_ERR_DECODE
+                    debugLog('⚠️ Erreur de décodage média (MEDIA_ERR_DECODE)', 'warning');
+                    showStatus('⚠️ Le flux a rencontré une erreur de décodage. Essayez de relancer la chaîne ou une autre chaîne.', 'warning');
+                } else if (code === 2) { // MEDIA_ERR_NETWORK
+                    debugLog('⚠️ Erreur réseau pendant la lecture (MEDIA_ERR_NETWORK)', 'warning');
+                    showStatus('⚠️ Erreur réseau pendant la lecture du flux. Vérifiez votre connexion Internet ou celle du serveur IPTV.', 'warning');
+                } else if (code === 1) { // MEDIA_ERR_ABORTED
+                    debugLog('⚠️ Lecture interrompue par le système ou l\'utilisateur (MEDIA_ERR_ABORTED)', 'warning');
+                    showStatus('⚠️ La lecture du flux a été interrompue. Relancez la chaîne si besoin.', 'warning');
+                }
             }, { once: true });
             
             // Scroll vers le player
