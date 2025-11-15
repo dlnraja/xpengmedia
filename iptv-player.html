@@ -276,8 +276,9 @@
         
         .channels-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
+            /* Mosaïque par défaut: cartes plus compactes pour permettre plusieurs colonnes sur écran XPENG */
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
             margin-top: 22px;
         }
         
@@ -466,9 +467,11 @@
         #playerSection[data-layout="grid"] .channels-grid,
         #playerSection[data-layout="grid"] .content-grid {
             display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
         }
 
-        /* Layout: liste / détail */
+        /* Layout: liste / détail - cartes pleine largeur en ligne */
         #playerSection[data-layout="list"] .channels-grid,
         #playerSection[data-layout="detail"] .channels-grid,
         #playerSection[data-layout="list"] .content-grid,
@@ -484,19 +487,19 @@
         #playerSection[data-layout="detail"] .media-card {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
 
         #playerSection[data-layout="list"] .channel-card h3,
         #playerSection[data-layout="detail"] .channel-card h3 {
-            font-size: 14px;
+            font-size: 15px;
             margin-bottom: 2px;
         }
 
         #playerSection[data-layout="list"] .media-card img,
         #playerSection[data-layout="detail"] .media-card img {
-            width: 110px;
-            height: 70px;
+            width: 120px;
+            height: 72px;
             flex-shrink: 0;
         }
 
@@ -505,7 +508,7 @@
             padding: 4px 0;
         }
 
-        /* Vue détaillée : un peu plus d'espace et titres multi-lignes */
+        /* Vue détaillée : plus d'espace et titres multi-lignes */
         #playerSection[data-layout="detail"] .media-card {
             padding: 12px 14px;
         }
