@@ -1732,24 +1732,26 @@
                 
                 debugLog(`✅ ${streamsList.length} chaînes trouvées dans la réponse`, 'success');
                 
-                if (streamsList.length > 0) {
-                    const first = streamsList[0];
-                    debugLog(`📦 Exemple 1ère chaîne:`, 'info');
-                    debugLog(`   - stream_id: ${first.stream_id || first.id || 'N/A'}`, 'info');
-                    debugLog(`   - name: ${first.name || first.stream_display_name || 'N/A'}`, 'info');
-                    debugLog(`   - category: ${first.category_name || first.category || 'N/A'}`, 'info');
+                // Limiter l'affichage pour éviter les freezes sur navigateurs légers
+                const MAX_CHANNELS_DISPLAY = 150;
+                const shouldLimit = streamsList.length > MAX_CHANNELS_DISPLAY;
+                
+                if (shouldLimit) {
+                    debugLog(`⚠️ Limitation à ${MAX_CHANNELS_DISPLAY} chaînes pour éviter freeze (total: ${streamsList.length})`, 'warning');
+                    streamsList = streamsList.slice(0, MAX_CHANNELS_DISPLAY);
                 }
                 
-                debugLog(`🛠️ Mapping des chaînes...`, 'info');
+                if (streamsList.length > 0) {
+                    const first = streamsList[0];
+                    debugLog(`📦 Exemple 1ère chaîne: ${first.name || first.stream_display_name || 'N/A'}`, 'info');
+                }
                 
-                channels = streamsList.map((ch, index) => {
+                debugLog(`🛠️ Mapping de ${streamsList.length} chaînes...`, 'info');
+                
+                channels = streamsList.map((ch) => {
                     const streamId = ch.stream_id || ch.id || ch.num;
                     const channelName = ch.name || ch.stream_display_name || ch.title || `Chaîne ${streamId}`;
                     const categoryName = ch.category_name || ch.category || '';
-                    
-                    if (index < 3) {
-                        debugLog(`   [${index + 1}] ${channelName} (ID: ${streamId})`, 'info');
-                    }
                     
                     return {
                         name: channelName,
@@ -1758,10 +1760,6 @@
                         streamId: streamId
                     };
                 });
-                
-                if (streamsList.length > 3) {
-                    debugLog(`   ... et ${streamsList.length - 3} autres chaînes`, 'info');
-                }
                 
                 const totalTime = Date.now() - startTime;
                 debugLog(`⏱️ Temps total de traitement: ${totalTime}ms`, 'success');
@@ -1840,6 +1838,9 @@
 
             debugLog(`📺 Affichage de ${channels.length} chaînes dans la grille`, 'info');
             
+            // Utiliser DocumentFragment pour optimiser l'ajout au DOM
+            const fragment = document.createDocumentFragment();
+            
             channels.forEach((channel, index) => {
                 const card = document.createElement('div');
                 const compat = evaluateChannelCompatibility(channel);
@@ -1856,10 +1857,6 @@
                     url: channel.url,
                     category: channel.category || 'Live'
                 };
-
-                if (index < 3) {
-                    debugLog(`   [${index + 1}] ${item.name} -> ${item.url.substring(0, 80)}...`, 'info');
-                }
 
                 const isFav = favorites.some(f => f.url === item.url);
                 const safeItem = JSON.stringify(item).replace(/"/g, '&quot;');
@@ -1892,8 +1889,12 @@
                     addToHistory(item);
                 };
                 
-                container.appendChild(card);
+                fragment.appendChild(card);
             });
+            
+            // Ajouter tous les éléments d'un coup au DOM
+            container.appendChild(fragment);
+            debugLog(`✅ ${channels.length} chaînes affichées`, 'success');
         }
         
         function filterContent() {
