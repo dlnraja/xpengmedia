@@ -856,6 +856,15 @@
         let currentPage = 1;
         let totalPages = 1;
         
+        // 💾 Cache intelligent des listes
+        const CACHE_DURATION_MS = 30 * 60 * 1000; // 30 minutes
+        
+        // 🔄 Détection automatique du meilleur proxy
+        let bestProxy = null;
+        
+        // ⚡ Lazy loading pour performance
+        let isLoading = false;
+        
         // Charger la configuration sauvegardée au démarrage
         window.onload = function() {
             loadSavedConfig();
@@ -1554,6 +1563,99 @@
             reader.readAsText(file);
         }
         
+        // 💾 Système de cache intelligent
+        function getCachedChannels(cacheKey) {
+            try {
+                const cached = localStorage.getItem(`iptv_cache_${cacheKey}`);
+                if (!cached) return null;
+                
+                const data = JSON.parse(cached);
+                const now = Date.now();
+                
+                if (now - data.timestamp > CACHE_DURATION_MS) {
+                    debugLog('⏰ Cache expiré, rechargement nécessaire', 'info');
+                    localStorage.removeItem(`iptv_cache_${cacheKey}`);
+                    return null;
+                }
+                
+                debugLog(`✅ Cache valide trouvé (${data.channels.length} chaînes, expire dans ${Math.round((CACHE_DURATION_MS - (now - data.timestamp)) / 60000)} min)`, 'success');
+                return data.channels;
+            } catch (e) {
+                debugLog(`⚠️ Erreur lecture cache: ${e.message}`, 'warning');
+                return null;
+            }
+        }
+        
+        function setCachedChannels(cacheKey, channelsList) {
+            try {
+                const data = {
+                    channels: channelsList,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem(`iptv_cache_${cacheKey}`, JSON.stringify(data));
+                debugLog(`💾 ${channelsList.length} chaînes mises en cache`, 'success');
+            } catch (e) {
+                debugLog(`⚠️ Erreur écriture cache: ${e.message}`, 'warning');
+            }
+        }
+        
+        // 🔄 Détection automatique du meilleur proxy (health check)
+        async function findBestProxy(proxies, testUrl) {
+            debugLog('🏥 Health check des proxies...', 'info');
+            
+            const proxyTests = proxies.map(async (proxy) => {
+                const startTime = Date.now();
+                try {
+                    const testEndpoint = proxy.url + encodeURIComponent(testUrl);
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000);
+                    
+                    await fetch(testEndpoint, {
+                        method: 'HEAD',
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    const responseTime = Date.now() - startTime;
+                    debugLog(`✅ ${proxy.name}: ${responseTime}ms`, 'success');
+                    
+                    return { proxy, responseTime, success: true };
+                } catch (e) {
+                    debugLog(`❌ ${proxy.name}: échec`, 'warning');
+                    return { proxy, responseTime: 9999, success: false };
+                }
+            });
+            
+            const results = await Promise.all(proxyTests);
+            const successfulProxies = results.filter(r => r.success).sort((a, b) => a.responseTime - b.responseTime);
+            
+            if (successfulProxies.length > 0) {
+                const best = successfulProxies[0];
+                debugLog(`🏆 Meilleur proxy: ${best.proxy.name} (${best.responseTime}ms)`, 'success');
+                return best.proxy;
+            }
+            
+            return null;
+        }
+        
+        // 🔁 Retry automatique intelligent
+        async function fetchWithRetry(url, options, maxRetries = 2) {
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    debugLog(`🎯 Tentative ${attempt}/${maxRetries}...`, 'info');
+                    const response = await fetch(url, options);
+                    return response;
+                } catch (error) {
+                    if (attempt === maxRetries) {
+                        throw error;
+                    }
+                    const waitTime = attempt * 1000;
+                    debugLog(`⏳ Échec, nouvelle tentative dans ${waitTime}ms...`, 'warning');
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                }
+            }
+        }
+        
         async function loadXtream(config) {
             debugLog('💉 loadXtream() appelé', 'info');
             showStatus('🔄 Connexion au serveur Xtream Codes...', 'success');
@@ -1570,6 +1672,22 @@
             const safeApiUrl = apiUrl.replace(config.password, '***').replace(encodeURIComponent(config.password), '***');
             
             debugLog(`🔗 URL API construite: ${safeApiUrl}`, 'info');
+            
+            // 💾 Vérifier le cache d'abord
+            const cacheKey = `${config.username}@${serverUrl}`;
+            const cachedChannels = getCachedChannels(cacheKey);
+            
+            if (cachedChannels && cachedChannels.length > 0) {
+                debugLog(`✅ Utilisation du cache (${cachedChannels.length} chaînes)`, 'success');
+                channels = cachedChannels;
+                currentPage = 1;
+                totalPages = Math.ceil(channels.length / MAX_CHANNELS_PER_PAGE);
+                displayChannels();
+                showPlayer();
+                showStatus(`✅ ${channels.length} chaînes chargées depuis le cache !`, 'success');
+                debugLog(`💡 Le cache sera actualisé automatiquement dans ${Math.round((CACHE_DURATION_MS) / 60000)} minutes ou tu peux forcer le rechargement`, 'info');
+                return;
+            }
             
             const startTime = Date.now();
             
@@ -1804,6 +1922,9 @@
                 debugLog(`⏱️ Temps total de traitement: ${totalTime}ms`, 'success');
                 debugLog(`✅ ${channels.length} chaînes mappées avec succès`, 'success');
                 
+                // 💾 Sauvegarder dans le cache
+                setCachedChannels(cacheKey, channels);
+                
                 displayChannels();
                 showPlayer();
                 
@@ -1985,14 +2106,53 @@
             document.getElementById('channelsCountBottom').textContent = totalChannels;
         }
         
+        // 🔍 Recherche intelligente avec filtrage global
+        let allChannelsBackup = [];  // Backup pour restaurer après recherche
+        let isSearchActive = false;
+        
         function filterContent() {
-            const search = document.getElementById('searchBox').value.toLowerCase();
-            const cards = document.querySelectorAll('.channel-card, .media-card');
+            const searchBox = document.getElementById('searchBox');
+            if (!searchBox) return;
             
-            cards.forEach(card => {
-                const text = card.textContent.toLowerCase();
-                card.style.display = text.includes(search) ? 'block' : 'none';
+            const search = searchBox.value.toLowerCase().trim();
+            
+            if (!search) {
+                // Restaurer toutes les chaînes si recherche vide
+                if (isSearchActive && allChannelsBackup.length > 0) {
+                    channels = allChannelsBackup;
+                    allChannelsBackup = [];
+                    isSearchActive = false;
+                    currentPage = 1;
+                    displayChannels();
+                    debugLog('🔍 Recherche effacée, affichage de toutes les chaînes', 'info');
+                }
+                return;
+            }
+            
+            // Sauvegarder toutes les chaînes la première fois
+            if (!isSearchActive) {
+                allChannelsBackup = [...channels];
+                isSearchActive = true;
+            }
+            
+            // Filtrer sur toutes les chaînes
+            const filtered = allChannelsBackup.filter(channel => {
+                const name = (channel.name || '').toLowerCase();
+                const category = (channel.category || '').toLowerCase();
+                return name.includes(search) || category.includes(search);
             });
+            
+            channels = filtered;
+            currentPage = 1;
+            displayChannels();
+            
+            debugLog(`🔍 Recherche: "${search}" → ${filtered.length} résultat(s)`, 'info');
+            
+            if (filtered.length === 0) {
+                showStatus(`❌ Aucun résultat pour "${search}"`, 'warning');
+            } else {
+                showStatus(`✅ ${filtered.length} résultat(s) pour "${search}"`, 'success');
+            }
         }
         
         // Charger les films depuis Xtream
