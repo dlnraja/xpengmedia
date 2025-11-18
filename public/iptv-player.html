@@ -1555,14 +1555,14 @@
                 
                 try {
                     debugLog(`🎯 Envoi requête GET DIRECTE vers: ${apiUrl.substring(0, 60)}...`, 'info');
-                    debugLog(`⏱️ Timeout: 10 secondes`, 'info');
+                    debugLog(`⏱️ Timeout: 5 secondes`, 'info');
                     
-                    // Créer une promesse avec timeout pour la connexion directe
-                    const fetchWithTimeout = (url, options, timeout = 10000) => {
+                    // Promesse avec timeout plus court pour éviter les freezes
+                    const fetchWithTimeout = (url, options, timeout = 5000) => {
                         return Promise.race([
                             fetch(url, options),
                             new Promise((_, reject) => 
-                                setTimeout(() => reject(new Error('Timeout dépassé (10s)')), timeout)
+                                setTimeout(() => reject(new Error('Timeout dépassé (5s)')), timeout)
                             )
                         ]);
                     };
@@ -1616,12 +1616,12 @@
                     debugLog(`🔄 ÉTAPE 2/3: Tentative avec proxies CORS...`, 'info');
                     showStatus('🔄 Étape 2/3: Utilisation de proxies CORS...', 'success');
                     
-                    // Liste de proxies CORS à tester dans l'ordre
+                    // Proxies limités + timeout court pour éviter les blocages
                     const proxies = [
                         { name: 'corsproxy.io', url: 'https://corsproxy.io/?' },
-                        { name: 'api.allorigins.win', url: 'https://api.allorigins.win/raw?url=' },
-                        { name: 'cors-anywhere (herokuapp)', url: 'https://cors-anywhere.herokuapp.com/' }
+                        { name: 'api.allorigins.win', url: 'https://api.allorigins.win/raw?url=' }
                     ];
+                    const proxyTimeoutMs = 5000;
                     
                     let proxySuccess = false;
                     let lastProxyError = null;
@@ -1631,7 +1631,19 @@
                             debugLog(`🌐 Test proxy: ${proxy.name}...`, 'info');
                             const proxiedUrl = proxy.url + encodeURIComponent(apiUrl);
                             
-                            response = await fetch(proxiedUrl);
+                            const proxyFetchWithTimeout = (url, options, timeout = proxyTimeoutMs) => {
+                                return Promise.race([
+                                    fetch(url, options),
+                                    new Promise((_, reject) => 
+                                        setTimeout(() => reject(new Error(`Timeout proxy (${timeout}ms)`)), timeout)
+                                    )
+                                ]);
+                            };
+                            
+                            response = await proxyFetchWithTimeout(proxiedUrl, {
+                                method: 'GET',
+                                headers: { 'Accept': 'application/json' }
+                            }, proxyTimeoutMs);
                             const elapsed = Date.now() - startTime;
                             debugLog(`⏱️ Réponse ${proxy.name} reçue en ${elapsed}ms`, 'info');
                             
