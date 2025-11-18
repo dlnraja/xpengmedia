@@ -884,6 +884,10 @@
         let bestProxy = null;
         let usedProxyForApi = null; // Mémoriser quel proxy a fonctionné pour l'API
         
+        // 🧠 Cache des proxies par serveur (adaptatif et intelligent)
+        let proxyCache = {}; // Format: { 'serverUrl': { proxy: 'name', timestamp: Date.now(), success: true } }
+        const PROXY_CACHE_DURATION = 60 * 60 * 1000; // 1 heure
+        
         // ⚡ Lazy loading pour performance
         let isLoading = false;
         
@@ -1825,6 +1829,13 @@
             
             const startTime = Date.now();
             
+            // 🧠 Vérifier si on a un proxy en cache pour ce serveur
+            const cachedProxy = proxyCache[serverUrl];
+            if (cachedProxy && (Date.now() - cachedProxy.timestamp) < PROXY_CACHE_DURATION) {
+                debugLog(`🧠 Proxy en cache trouvé pour ce serveur: ${cachedProxy.proxy}`, 'success');
+                debugLog(`⏰ Cache valide encore ${Math.round((PROXY_CACHE_DURATION - (Date.now() - cachedProxy.timestamp)) / 60000)} minutes`, 'info');
+            }
+            
             try {
                 debugLog('═══════════════════════════════════════════', 'info');
                 debugLog('🔄 ÉTAPE 1/3: Tentative de connexion DIRECTE (sans proxy)', 'info');
@@ -1894,9 +1905,10 @@
                         debugLog(`🔍 Diagnostic: Problème de connexion réseau`, 'warning');
                     }
                     
-                    debugLog(`═══════════════════════════════════════════`, 'warning');
-                    debugLog(`🔄 ÉTAPE 2/3: Tentative avec proxies CORS...`, 'info');
-                    showStatus('🔄 Étape 2/3: Utilisation de proxies CORS...', 'success');
+                    debugLog('═══════════════════════════════════════════', 'info');
+                debugLog('🔄 ÉTAPE 2/3: Tentative avec proxies CORS...', 'info');
+                debugLog('🧠 Système adaptatif: Le player va tester et mémoriser le meilleur proxy pour ce serveur', 'info');
+                showStatus('🔄 Étape 2/3: Test intelligent des proxies CORS...', 'success');
                     
                     // Construction de la liste des proxies dans l'ordre de priorité
                     const proxies = [];
@@ -1944,9 +1956,21 @@
                     let proxySuccess = false;
                     let lastProxyError = null;
                     
+                    // 🧠 Réorganiser les proxies pour essayer d'abord celui en cache
+                    if (cachedProxy && cachedProxy.proxy) {
+                        const cachedProxyObj = proxies.find(p => p.name === cachedProxy.proxy);
+                        if (cachedProxyObj) {
+                            // Mettre le proxy en cache en première position
+                            proxies = proxies.filter(p => p.name !== cachedProxy.proxy);
+                            proxies.unshift(cachedProxyObj);
+                            debugLog(`🚀 Tentative avec le proxy mémorisé en priorité: ${cachedProxy.proxy}`, 'success');
+                        }
+                    }
+                    
                     for (const proxy of proxies) {
                         try {
-                            debugLog(`🌐 Test proxy: ${proxy.name}...`, 'info');
+                            const isCachedProxy = cachedProxy && proxy.name === cachedProxy.proxy;
+                            debugLog(`🌐 Test proxy: ${proxy.name}${isCachedProxy ? ' (mémorisé)' : ''}...`, 'info');
                             const proxiedUrl = proxy.url + encodeURIComponent(apiUrl);
                             
                             const proxyFetchWithTimeout = (url, options, timeout = proxyTimeoutMs) => {
@@ -2001,8 +2025,16 @@
                             usedProxy = true;
                             proxySuccess = true;
                             usedProxyForApi = proxy.url; // Mémoriser le proxy qui a fonctionné
+                            
+                            // 🧠 Mémoriser ce proxy pour ce serveur spécifique
+                            proxyCache[serverUrl] = {
+                                proxy: proxy.name,
+                                timestamp: Date.now(),
+                                success: true
+                            };
                             debugLog(`✅ Connexion via ${proxy.name} réussie`, 'success');
                             debugLog(`💾 Proxy mémorisé pour les streams: ${proxy.name}`, 'info');
+                            debugLog(`🧠 Ce proxy sera utilisé en priorité pour ${serverUrl.replace(/https?:\/\//, '')}`, 'success');
                             break; // Succès, sortir de la boucle
                             
                         } catch (proxyError) {
