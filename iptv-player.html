@@ -846,22 +846,25 @@
         let currentTab = 'live';
         let currentLayout = 'grid';
         
-        // ⚡ Configuration du proxy Cloudflare Worker (optionnel)
-        // Pour activer, déploie le worker et remplace null par l'URL :
-        // Exemple: 'https://xpengmedia-iptv-proxy.VOTRE-ID.workers.dev'
-        const CLOUDFLARE_PROXY = null;
+        // ⚡ Configuration des proxies backend (par ordre de priorité)
+        // Déploie-les et remplace null par les URLs :
+        const CLOUDFLARE_PROXY = null;  // Ex: 'https://xpengmedia-iptv-proxy.VOTRE-ID.workers.dev'
+        const VERCEL_PROXY = null;      // Ex: 'https://xpengmedia.vercel.app/api/proxy'
+        const NETLIFY_PROXY = null;     // Ex: 'https://xpengmedia.netlify.app/.netlify/functions/proxy'
         
         // 🎬 Proxifier les URLs de streaming (nécessaire si erreur CORS/manifestLoadError)
         const PROXY_STREAMS = true; // Active le proxy pour les flux vidéo
         
         // 🔄 Liste des proxies de streaming (testés automatiquement dans l'ordre)
         const STREAM_PROXIES = [
-            { name: 'Cloudflare Worker', url: null, priority: 1 }, // Sera rempli si CLOUDFLARE_PROXY configuré
-            { name: 'cors-anywhere.herokuapp.com', url: 'https://cors-anywhere.herokuapp.com/', priority: 2 },
-            { name: 'corsproxy.io', url: 'https://corsproxy.io/?', priority: 3 },
-            { name: 'api.codetabs.com', url: 'https://api.codetabs.com/v1/proxy?quest=', priority: 4 },
-            { name: 'api.allorigins.win', url: 'https://api.allorigins.win/raw?url=', priority: 5 },
-            { name: 'cors.eu.org', url: 'https://cors.eu.org/', priority: 6 }
+            { name: 'Cloudflare Worker', url: null, priority: 1 },  // Sera rempli automatiquement
+            { name: 'Vercel Edge', url: null, priority: 2 },        // Sera rempli automatiquement
+            { name: 'Netlify Functions', url: null, priority: 3 },  // Sera rempli automatiquement
+            { name: 'cors-anywhere.herokuapp.com', url: 'https://cors-anywhere.herokuapp.com/', priority: 4 },
+            { name: 'corsproxy.io', url: 'https://corsproxy.io/?', priority: 5 },
+            { name: 'api.codetabs.com', url: 'https://api.codetabs.com/v1/proxy?quest=', priority: 6 },
+            { name: 'api.allorigins.win', url: 'https://api.allorigins.win/raw?url=', priority: 7 },
+            { name: 'cors.eu.org', url: 'https://cors.eu.org/', priority: 8 }
         ];
         
         let currentStreamProxy = null; // Proxy actuellement utilisé pour les streams
@@ -1675,10 +1678,18 @@
         
         // 🎬 Sélection intelligente du proxy de streaming
         function selectStreamProxy() {
-            // Initialiser le Cloudflare Worker si configuré
+            // Initialiser les backends dans l'ordre de priorité
             if (CLOUDFLARE_PROXY && STREAM_PROXIES[0].url === null) {
                 STREAM_PROXIES[0].url = CLOUDFLARE_PROXY + '?url=';
                 debugLog('⚡ Cloudflare Worker configuré pour les streams', 'success');
+            }
+            if (VERCEL_PROXY && STREAM_PROXIES[1].url === null) {
+                STREAM_PROXIES[1].url = VERCEL_PROXY + '?url=';
+                debugLog('⚡ Vercel Edge configuré pour les streams', 'success');
+            }
+            if (NETLIFY_PROXY && STREAM_PROXIES[2].url === null) {
+                STREAM_PROXIES[2].url = NETLIFY_PROXY + '?url=';
+                debugLog('⚡ Netlify Functions configuré pour les streams', 'success');
             }
             
             // Si on a déjà un proxy qui fonctionne, le réutiliser
@@ -1885,17 +1896,40 @@
                     debugLog(`🔄 ÉTAPE 2/3: Tentative avec proxies CORS...`, 'info');
                     showStatus('🔄 Étape 2/3: Utilisation de proxies CORS...', 'success');
                     
-                    // Construction de la liste des proxies (Cloudflare Worker en priorité si configuré)
+                    // Construction de la liste des proxies dans l'ordre de priorité
                     const proxies = [];
+                    
+                    // 1️⃣ Cloudflare Worker (le plus rapide)
                     if (CLOUDFLARE_PROXY) {
                         proxies.push({ 
-                            name: 'Cloudflare Worker (privé)', 
+                            name: 'Cloudflare Worker', 
                             url: CLOUDFLARE_PROXY + '?url=',
-                            isCloudflare: true
+                            isBackend: true
                         });
-                        debugLog(`⚡ Proxy Cloudflare Worker configuré et sera testé en priorité`, 'info');
+                        debugLog(`⚡ Cloudflare Worker configuré (priorité 1)`, 'info');
                     }
-                    // Proxies publics en fallback (plus de choix pour plus de fiabilité)
+                    
+                    // 2️⃣ Vercel Edge (très rapide)
+                    if (VERCEL_PROXY) {
+                        proxies.push({ 
+                            name: 'Vercel Edge', 
+                            url: VERCEL_PROXY + '?url=',
+                            isBackend: true
+                        });
+                        debugLog(`⚡ Vercel Edge configuré (priorité 2)`, 'info');
+                    }
+                    
+                    // 3️⃣ Netlify Functions (rapide)
+                    if (NETLIFY_PROXY) {
+                        proxies.push({ 
+                            name: 'Netlify Functions', 
+                            url: NETLIFY_PROXY + '?url=',
+                            isBackend: true
+                        });
+                        debugLog(`⚡ Netlify Functions configuré (priorité 3)`, 'info');
+                    }
+                    
+                    // 4️⃣ Proxies publics en fallback (plus de choix pour plus de fiabilité)
                     proxies.push(
                         { name: 'cors-anywhere.herokuapp.com', url: 'https://cors-anywhere.herokuapp.com/' },
                         { name: 'corsproxy.io', url: 'https://corsproxy.io/?' },
