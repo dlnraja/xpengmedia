@@ -780,7 +780,27 @@
             
             <!-- Section Live TV -->
             <div id="sectionLive" class="content-section">
+                <!-- Pagination en haut -->
+                <div id="paginationTop" class="pagination-controls" style="display: none; margin-bottom: 20px; text-align: center;">
+                    <button onclick="changePage(1)" style="padding: 8px 16px; margin: 0 5px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">⏮️ Première</button>
+                    <button onclick="changePage(currentPage - 1)" style="padding: 8px 16px; margin: 0 5px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">◀️ Précédent</button>
+                    <span style="padding: 8px 16px; color: #94a3b8; font-weight: 500;">Page <span id="currentPageTop">1</span> / <span id="totalPagesTop">1</span></span>
+                    <button onclick="changePage(currentPage + 1)" style="padding: 8px 16px; margin: 0 5px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">▶️ Suivant</button>
+                    <button onclick="changePage(totalPages)" style="padding: 8px 16px; margin: 0 5px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">⏭️ Dernière</button>
+                    <span style="margin-left: 15px; color: #64748b; font-size: 14px;">(<span id="channelsCountTop">0</span> chaînes)</span>
+                </div>
+                
                 <div id="channelsList" class="channels-grid"></div>
+                
+                <!-- Pagination en bas -->
+                <div id="paginationBottom" class="pagination-controls" style="display: none; margin-top: 20px; text-align: center;">
+                    <button onclick="changePage(1)" style="padding: 8px 16px; margin: 0 5px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">⏮️ Première</button>
+                    <button onclick="changePage(currentPage - 1)" style="padding: 8px 16px; margin: 0 5px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">◀️ Précédent</button>
+                    <span style="padding: 8px 16px; color: #94a3b8; font-weight: 500;">Page <span id="currentPageBottom">1</span> / <span id="totalPagesBottom">1</span></span>
+                    <button onclick="changePage(currentPage + 1)" style="padding: 8px 16px; margin: 0 5px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">▶️ Suivant</button>
+                    <button onclick="changePage(totalPages)" style="padding: 8px 16px; margin: 0 5px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">⏭️ Dernière</button>
+                    <span style="margin-left: 15px; color: #64748b; font-size: 14px;">(<span id="channelsCountBottom">0</span> chaînes)</span>
+                </div>
             </div>
             
             <!-- Section Films -->
@@ -825,6 +845,16 @@
         let hls = null;
         let currentTab = 'live';
         let currentLayout = 'grid';
+        
+        // ⚡ Configuration du proxy Cloudflare Worker (optionnel)
+        // Pour activer, déploie le worker et remplace null par l'URL :
+        // Exemple: 'https://xpengmedia-iptv-proxy.VOTRE-ID.workers.dev'
+        const CLOUDFLARE_PROXY = null;
+        
+        // 📊 Pagination pour gros catalogues (évite freeze navigateur)
+        const MAX_CHANNELS_PER_PAGE = 100;
+        let currentPage = 1;
+        let totalPages = 1;
         
         // Charger la configuration sauvegardée au démarrage
         window.onload = function() {
@@ -1616,11 +1646,21 @@
                     debugLog(`🔄 ÉTAPE 2/3: Tentative avec proxies CORS...`, 'info');
                     showStatus('🔄 Étape 2/3: Utilisation de proxies CORS...', 'success');
                     
-                    // Proxies limités + timeout court pour éviter les blocages
-                    const proxies = [
+                    // Construction de la liste des proxies (Cloudflare Worker en priorité si configuré)
+                    const proxies = [];
+                    if (CLOUDFLARE_PROXY) {
+                        proxies.push({ 
+                            name: 'Cloudflare Worker (privé)', 
+                            url: CLOUDFLARE_PROXY + '?url=',
+                            isCloudflare: true
+                        });
+                        debugLog(`⚡ Proxy Cloudflare Worker configuré et sera testé en priorité`, 'info');
+                    }
+                    // Proxies publics en fallback
+                    proxies.push(
                         { name: 'corsproxy.io', url: 'https://corsproxy.io/?' },
                         { name: 'api.allorigins.win', url: 'https://api.allorigins.win/raw?url=' }
-                    ];
+                    );
                     const proxyTimeoutMs = 5000;
                     
                     let proxySuccess = false;
@@ -1732,21 +1772,20 @@
                 
                 debugLog(`✅ ${streamsList.length} chaînes trouvées dans la réponse`, 'success');
                 
-                // Limiter l'affichage pour éviter les freezes sur navigateurs légers
-                const MAX_CHANNELS_DISPLAY = 150;
-                const shouldLimit = streamsList.length > MAX_CHANNELS_DISPLAY;
-                
-                if (shouldLimit) {
-                    debugLog(`⚠️ Limitation à ${MAX_CHANNELS_DISPLAY} chaînes pour éviter freeze (total: ${streamsList.length})`, 'warning');
-                    streamsList = streamsList.slice(0, MAX_CHANNELS_DISPLAY);
-                }
-                
                 if (streamsList.length > 0) {
                     const first = streamsList[0];
                     debugLog(`📦 Exemple 1ère chaîne: ${first.name || first.stream_display_name || 'N/A'}`, 'info');
                 }
                 
                 debugLog(`🛠️ Mapping de ${streamsList.length} chaînes...`, 'info');
+                
+                // Initialiser la pagination
+                currentPage = 1;
+                totalPages = Math.ceil(streamsList.length / MAX_CHANNELS_PER_PAGE);
+                
+                if (streamsList.length > MAX_CHANNELS_PER_PAGE) {
+                    debugLog(`📊 Pagination activée: ${totalPages} pages de ${MAX_CHANNELS_PER_PAGE} chaînes max`, 'info');
+                }
                 
                 channels = streamsList.map((ch) => {
                     const streamId = ch.stream_id || ch.id || ch.num;
@@ -1833,15 +1872,41 @@
             if (!Array.isArray(channels) || channels.length === 0) {
                 debugLog('⚠️ Aucune chaîne à afficher (liste vide)', 'warning');
                 container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 24px;">Aucune chaîne disponible pour cette playlist ou ce serveur.</p>';
+                // Masquer pagination
+                document.getElementById('paginationTop').style.display = 'none';
+                document.getElementById('paginationBottom').style.display = 'none';
                 return;
             }
 
-            debugLog(`📺 Affichage de ${channels.length} chaînes dans la grille`, 'info');
+            // Calculer pagination
+            const totalChannels = channels.length;
+            totalPages = Math.ceil(totalChannels / MAX_CHANNELS_PER_PAGE);
+            
+            // Borner la page actuelle
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            
+            // Calculer les indices de début et fin
+            const startIndex = (currentPage - 1) * MAX_CHANNELS_PER_PAGE;
+            const endIndex = Math.min(startIndex + MAX_CHANNELS_PER_PAGE, totalChannels);
+            const channelsToDisplay = channels.slice(startIndex, endIndex);
+            
+            debugLog(`📺 Affichage page ${currentPage}/${totalPages}: chaînes ${startIndex + 1}-${endIndex} sur ${totalChannels}`, 'info');
+            
+            // Afficher/masquer contrôles pagination
+            if (totalPages > 1) {
+                document.getElementById('paginationTop').style.display = 'block';
+                document.getElementById('paginationBottom').style.display = 'block';
+                updatePaginationControls();
+            } else {
+                document.getElementById('paginationTop').style.display = 'none';
+                document.getElementById('paginationBottom').style.display = 'none';
+            }
             
             // Utiliser DocumentFragment pour optimiser l'ajout au DOM
             const fragment = document.createDocumentFragment();
             
-            channels.forEach((channel, index) => {
+            channelsToDisplay.forEach((channel, index) => {
                 const card = document.createElement('div');
                 const compat = evaluateChannelCompatibility(channel);
 
@@ -1894,7 +1959,30 @@
             
             // Ajouter tous les éléments d'un coup au DOM
             container.appendChild(fragment);
-            debugLog(`✅ ${channels.length} chaînes affichées`, 'success');
+            debugLog(`✅ ${channelsToDisplay.length} chaînes affichées (page ${currentPage}/${totalPages})`, 'success');
+        }
+        
+        // 📄 Fonctions de pagination
+        function changePage(newPage) {
+            if (newPage < 1 || newPage > totalPages) return;
+            currentPage = newPage;
+            displayChannels();
+            // Scroller en haut de la liste
+            document.getElementById('channelsList').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        function updatePaginationControls() {
+            const totalChannels = channels.length;
+            
+            // Mettre à jour les éléments en haut
+            document.getElementById('currentPageTop').textContent = currentPage;
+            document.getElementById('totalPagesTop').textContent = totalPages;
+            document.getElementById('channelsCountTop').textContent = totalChannels;
+            
+            // Mettre à jour les éléments en bas
+            document.getElementById('currentPageBottom').textContent = currentPage;
+            document.getElementById('totalPagesBottom').textContent = totalPages;
+            document.getElementById('channelsCountBottom').textContent = totalChannels;
         }
         
         function filterContent() {
