@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Scripts de test avec credentials (NE JAMAIS COMMITTER)
+test-xtream.ps1
+test-*.ps1
+*-credentials.*
+*-password.*
