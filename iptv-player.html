@@ -2516,6 +2516,12 @@
                     debugLog('⚠️ Mixed content détecté (HTTPS→HTTP), activation du proxy de streaming', 'warning');
                     needsProxy = true;
                     
+                    // TOUJOURS sauvegarder l'URL originale pour permettre le retry
+                    if (!channel._originalUrl) {
+                        channel._originalUrl = channel.url;
+                        debugLog('💾 URL originale sauvegardée pour retry automatique', 'info');
+                    }
+                    
                     // Sélectionner le meilleur proxy disponible
                     const selectedProxy = selectStreamProxy();
                     
@@ -2524,9 +2530,6 @@
                         debugLog(`🔄 Proxy sélectionné: ${selectedProxy.name}`, 'success');
                         debugLog('🔄 URL proxifiée: ' + finalStreamUrl.substring(0, 80) + '...', 'info');
                         showStatus(`🔄 Flux proxifié via ${selectedProxy.name}`, 'success');
-                        
-                        // Sauvegarder l'URL originale pour retry avec autre proxy
-                        channel._originalUrl = channel.url;
                         channel._currentProxy = selectedProxy.name;
                     } else {
                         debugLog('⚠️ Aucun proxy disponible, tentative en direct (risque d\'échec)', 'warning');
