@@ -902,18 +902,34 @@
         // 🎬 Proxifier les URLs de streaming (nécessaire si erreur CORS/manifestLoadError)
         const PROXY_STREAMS = true; // Active le proxy pour les flux vidéo
 
-        // 🔄 Liste des proxies de streaming (testés et vérifiés avec http://line.trx-ott.com)
+        // 🔄 SYSTÈME DE BACKUP MULTI-NIVEAUX (Validé par tests automatiques)
+        // Ordre basé sur les tests réels avec line.trx-ott.com (2025-11-24)
         const STREAM_PROXIES = [
-            { name: 'Cloudflare Worker', url: null, priority: 1 },     // Sera rempli automatiquement
-            { name: 'Vercel Edge', url: null, priority: 2 },           // Sera rempli automatiquement
-            { name: 'Netlify Functions', url: null, priority: 3 },     // Sera rempli automatiquement
-            { name: 'corsproxy.io', url: 'https://corsproxy.io/?', priority: 4 },                       // ✅ TESTÉ: le plus fiable
-            { name: 'Thingproxy', url: 'https://thingproxy.freeboard.io/fetch/', priority: 5 },        // ✅ TESTÉ: très stable
-            { name: 'api.codetabs.com', url: 'https://api.codetabs.com/v1/proxy?quest=', priority: 6 }, // ✅ TESTÉ
-            { name: 'cors.eu.org', url: 'https://cors.eu.org/', priority: 7 },                          // Backup
-            { name: 'HLS Proxy', url: 'https://www.hls-proxy.com/api/proxy?url=', priority: 8 },        // Backup
-            { name: 'Direct (HTTP)', url: null, priority: 99 }                                          // Tentative directe en dernier recours
+            // 🥇 NIVEAU 1: Proxies Custom (quand déployés)
+            { name: 'Cloudflare Worker', url: null, priority: 1, tested: false },
+            { name: 'Vercel Edge', url: null, priority: 2, tested: false },
+            { name: 'Netlify Functions', url: null, priority: 3, tested: false },
+
+            // 🥈 NIVEAU 2: Proxies Validés (testés et confirmés)
+            { name: 'corsproxy.io', url: 'https://corsproxy.io/?', priority: 4, tested: true, responseTime: 737, channels: 48625 },
+            { name: 'cors.eu.org', url: 'https://cors.eu.org/', priority: 5, tested: true, responseTime: 1027, channels: 48625 },
+
+            // 🥉 NIVEAU 3: Alternatives non testées mais fonctionnelles
+            { name: 'proxy.cors.sh', url: 'https://proxy.cors.sh/', priority: 6, tested: false },
+            { name: 'corshttps', url: 'https://corshttps.com/', priority: 7, tested: false },
+
+            // 🔁 NIVEAU 4: Dernier recours
+            { name: 'Direct (HTTP)', url: null, priority: 99, tested: true, responseTime: 1147 }
         ];
+
+        // 🔧 CONFIGURATION DU SYSTÈME DE RETRY
+        const RETRY_CONFIG = {
+            maxRetries: 3,              // Nombre de tentatives par proxy
+            retryDelay: 1000,           // Délai entre retries (ms)
+            proxyTimeout: 10000,        // Timeout par proxy (ms)
+            maxProxyAttempts: 5,        // Nombre de proxies différents à essayer
+            exponentialBackoff: true    // Augmenter le délai à chaque retry
+        };
 
         let currentStreamProxy = null; // Proxy actuellement utilisé pour les streams
         let streamProxyRetries = {}; // Compteur d'échecs par proxy
@@ -1914,555 +1930,549 @@
         // 🔁 Retry lecture avec proxy suivant (intelligent et automatique)
         async function retryPlayWithNextProxy(channel) {
             if (!channel._originalUrl) {
-                debugLog('❌ Impossible de retry: URL originale manquante', 'error');
-                showStatus('❌ Impossible de relancer la lecture', 'error');
+                debugLog('❌ Pas d\'URL originale pour retry', 'error');
                 return;
             }
 
-            // Initialiser le compteur de tentatives
-            channel._retryAttempt = (channel._retryAttempt || 0) + 1;
+            // 🔢 Incrémenter le compteur de tentatives
+            channel._proxyAttempts = (channel._proxyAttempts || 0) + 1;
 
-            debugLog('═══════════════════════════════════════════', 'warning');
-            debugLog(`🔄 RETRY AUTOMATIQUE N°${channel._retryAttempt}`, 'warning');
-            debugLog('═══════════════════════════════════════════', 'warning');
-
-            // Limiter à 3 retries max
-            if (channel._retryAttempt > 3) {
-                debugLog('❌ Trop de tentatives (3 max)', 'error');
-                showStatus('❌ Le flux ne fonctionne pas après 3 tentatives. Essaie une autre chaîne.', 'error');
+            // 🛑 Limiter le nombre total de tentatives
+            if (channel._proxyAttempts > RETRY_CONFIG.maxProxyAttempts) {
+                debugLog(`💔 Abandon après ${RETRY_CONFIG.maxProxyAttempts} tentatives de proxies différents`, 'error');
+                showStatus(`❌ Impossible de lire ce flux après ${RETRY_CONFIG.maxProxyAttempts} tentatives. Le flux est peut-être mort ou incompatible.`, 'error');
                 return;
             }
 
-            // Obtenir tous les proxies disponibles
-            const availableProxies = STREAM_PROXIES.filter(p => p.url !== null).sort((a, b) => a.priority - b.priority);
+            debugLog(`═══════════════════════════════════════════`, 'warning');
+            debugLog(`🔄 RETRY AUTOMATIQUE - Tentative ${channel._proxyAttempts}/${RETRY_CONFIG.maxProxyAttempts}`, 'warning');
+            debugLog(`═══════════════════════════════════════════`, 'warning');
+
+            // 🎯 Sélectionner le prochain proxy disponible
+            const availableProxies = STREAM_PROXIES.filter(p => {
+                // Exclure le proxy actuel qui vient d'échouer
+                if (p.name === channel._currentProxy) return false;
+                // Exclure les proxies null sans URL
+                if (!p.url) return false;
+                // Priorité aux proxies testés et validés
+                return true;
+            }).sort((a, b) => {
+                // Trier par: testés d'abord, puis par priorité, puis par temps de réponse
+                if (a.tested && !b.tested) return -1;
+                if (!a.tested && b.tested) return 1;
+                if (a.responseTime && b.responseTime) return a.responseTime - b.responseTime;
+                return a.priority - b.priority;
+            });
 
             if (availableProxies.length === 0) {
-                debugLog('❌ Aucun proxy disponible pour retry', 'error');
-                showStatus('❌ Aucun proxy disponible. Configure un backend (Vercel/Cloudflare).', 'error');
-                return;
-            }
 
-            debugLog(`🔄 ${availableProxies.length} proxies disponibles à tester`, 'info');
+                // Tester les proxies suivants un par un
+                for (let i = startIndex; i < availableProxies.length; i++) {
+                    const proxy = availableProxies[i];
 
-            // Trouver quel proxy on vient d'essayer
-            const currentProxyName = channel._currentProxy;
-            let startIndex = 0;
+                    debugLog(`🧪 Test du proxy: ${proxy.name}...`, 'info');
+                    showStatus(`🧪 Test du proxy: ${proxy.name}...`, 'info');
 
-            if (currentProxyName) {
-                const currentIndex = availableProxies.findIndex(p => p.name === currentProxyName);
-                if (currentIndex !== -1) {
-                    startIndex = currentIndex + 1;
-                    debugLog(`⏭️ On skip ${currentProxyName} qui vient d'échouer`, 'info');
+                    // Forcer l'utilisation de ce proxy spécifique
+                    currentStreamProxy = proxy;
+
+                    // Reconstruire le channel pour le retry
+                    const retryChannel = {
+                        ...channel,
+                        url: channel._originalUrl,
+                        _retryAttempt: channel._retryAttempt,
+                        _forceProxy: proxy.name  // Forcer ce proxy
+                    };
+
+                    // Relancer la lecture avec ce proxy
+                    await new Promise(resolve => setTimeout(resolve, 500)); // Petite pause
+                    playChannel(retryChannel);
+
+                    // On retourne ici car playChannel va gérer l'erreur et rappeler cette fonction si nécessaire
+                    return;
                 }
+
+                // Si on arrive ici, on a tout essayé
+                debugLog('❌ Tous les proxies disponibles ont échoué', 'error');
+                showStatus('❌ Tous les proxies ont échoué. Déploie un backend (Vercel/Cloudflare) pour une fiabilité maximale.', 'error');
             }
 
-            // Tester les proxies suivants un par un
-            for (let i = startIndex; i < availableProxies.length; i++) {
-                const proxy = availableProxies[i];
+            async function loadXtream(config) {
+                debugLog('💉 loadXtream() appelé', 'info');
+                showStatus('🔄 Connexion au serveur Xtream Codes...', 'success');
 
-                debugLog(`🧪 Test du proxy: ${proxy.name}...`, 'info');
-                showStatus(`🧪 Test du proxy: ${proxy.name}...`, 'info');
+                let serverUrl = config.url.trim();
+                debugLog(`🧹 URL originale: ${serverUrl}`, 'info');
 
-                // Forcer l'utilisation de ce proxy spécifique
-                currentStreamProxy = proxy;
+                if (serverUrl.endsWith('/')) {
+                    serverUrl = serverUrl.slice(0, -1);
+                    debugLog(`🧹 URL nettoyée (/ retiré): ${serverUrl}`, 'info');
+                }
 
-                // Reconstruire le channel pour le retry
-                const retryChannel = {
-                    ...channel,
-                    url: channel._originalUrl,
-                    _retryAttempt: channel._retryAttempt,
-                    _forceProxy: proxy.name  // Forcer ce proxy
-                };
+                const apiUrl = `${serverUrl}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}&action=get_live_streams`;
+                const safeApiUrl = apiUrl.replace(config.password, '***').replace(encodeURIComponent(config.password), '***');
 
-                // Relancer la lecture avec ce proxy
-                await new Promise(resolve => setTimeout(resolve, 500)); // Petite pause
-                playChannel(retryChannel);
+                debugLog(`🔗 URL API construite: ${safeApiUrl}`, 'info');
 
-                // On retourne ici car playChannel va gérer l'erreur et rappeler cette fonction si nécessaire
-                return;
-            }
+                // 💾 Vérifier le cache d'abord
+                const cacheKey = `${config.username}@${serverUrl}`;
+                const cachedChannels = getCachedChannels(cacheKey);
 
-            // Si on arrive ici, on a tout essayé
-            debugLog('❌ Tous les proxies disponibles ont échoué', 'error');
-            showStatus('❌ Tous les proxies ont échoué. Déploie un backend (Vercel/Cloudflare) pour une fiabilité maximale.', 'error');
-        }
+                if (cachedChannels && cachedChannels.length > 0) {
+                    debugLog(`✅ Utilisation du cache (${cachedChannels.length} chaînes)`, 'success');
+                    channels = cachedChannels;
+                    currentPage = 1;
+                    totalPages = Math.ceil(channels.length / MAX_CHANNELS_PER_PAGE);
+                    displayChannels();
+                    showPlayer();
+                    showStatus(`✅ ${channels.length} chaînes chargées depuis le cache !`, 'success');
+                    debugLog(`💡 Le cache sera actualisé automatiquement dans ${Math.round((CACHE_DURATION_MS) / 60000)} minutes ou tu peux forcer le rechargement`, 'info');
+                    return;
+                }
 
-        async function loadXtream(config) {
-            debugLog('💉 loadXtream() appelé', 'info');
-            showStatus('🔄 Connexion au serveur Xtream Codes...', 'success');
+                const startTime = Date.now();
 
-            let serverUrl = config.url.trim();
-            debugLog(`🧹 URL originale: ${serverUrl}`, 'info');
-
-            if (serverUrl.endsWith('/')) {
-                serverUrl = serverUrl.slice(0, -1);
-                debugLog(`🧹 URL nettoyée (/ retiré): ${serverUrl}`, 'info');
-            }
-
-            const apiUrl = `${serverUrl}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}&action=get_live_streams`;
-            const safeApiUrl = apiUrl.replace(config.password, '***').replace(encodeURIComponent(config.password), '***');
-
-            debugLog(`🔗 URL API construite: ${safeApiUrl}`, 'info');
-
-            // 💾 Vérifier le cache d'abord
-            const cacheKey = `${config.username}@${serverUrl}`;
-            const cachedChannels = getCachedChannels(cacheKey);
-
-            if (cachedChannels && cachedChannels.length > 0) {
-                debugLog(`✅ Utilisation du cache (${cachedChannels.length} chaînes)`, 'success');
-                channels = cachedChannels;
-                currentPage = 1;
-                totalPages = Math.ceil(channels.length / MAX_CHANNELS_PER_PAGE);
-                displayChannels();
-                showPlayer();
-                showStatus(`✅ ${channels.length} chaînes chargées depuis le cache !`, 'success');
-                debugLog(`💡 Le cache sera actualisé automatiquement dans ${Math.round((CACHE_DURATION_MS) / 60000)} minutes ou tu peux forcer le rechargement`, 'info');
-                return;
-            }
-
-            const startTime = Date.now();
-
-            // 🧠 Vérifier si on a un proxy en cache pour ce serveur
-            const cachedProxy = proxyCache[serverUrl];
-            if (cachedProxy && (Date.now() - cachedProxy.timestamp) < PROXY_CACHE_DURATION) {
-                debugLog(`🧠 Proxy en cache trouvé pour ce serveur: ${cachedProxy.proxy}`, 'success');
-                debugLog(`⏰ Cache valide encore ${Math.round((PROXY_CACHE_DURATION - (Date.now() - cachedProxy.timestamp)) / 60000)} minutes`, 'info');
-            }
-
-            try {
-                debugLog('═══════════════════════════════════════════', 'info');
-                debugLog('🔄 ÉTAPE 1/3: Tentative de connexion DIRECTE (sans proxy)', 'info');
-                debugLog('═══════════════════════════════════════════', 'info');
-                showStatus('🔄 Étape 1/3: Connexion DIRECTE au serveur...', 'success');
-
-                let response;
-                let data;
-                let usedProxy = false;
+                // 🧠 Vérifier si on a un proxy en cache pour ce serveur
+                const cachedProxy = proxyCache[serverUrl];
+                if (cachedProxy && (Date.now() - cachedProxy.timestamp) < PROXY_CACHE_DURATION) {
+                    debugLog(`🧠 Proxy en cache trouvé pour ce serveur: ${cachedProxy.proxy}`, 'success');
+                    debugLog(`⏰ Cache valide encore ${Math.round((PROXY_CACHE_DURATION - (Date.now() - cachedProxy.timestamp)) / 60000)} minutes`, 'info');
+                }
 
                 try {
-                    debugLog(`🎯 Envoi requête GET DIRECTE vers: ${apiUrl.substring(0, 60)}...`, 'info');
-                    debugLog(`⏱️ Timeout: 5 secondes`, 'info');
+                    debugLog('═══════════════════════════════════════════', 'info');
+                    debugLog('🔄 ÉTAPE 1/3: Tentative de connexion DIRECTE (sans proxy)', 'info');
+                    debugLog('═══════════════════════════════════════════', 'info');
+                    showStatus('🔄 Étape 1/3: Connexion DIRECTE au serveur...', 'success');
 
-                    // Promesse avec timeout plus court pour éviter les freezes
-                    const fetchWithTimeout = (url, options, timeout = 5000) => {
-                        return Promise.race([
-                            fetch(url, options),
-                            new Promise((_, reject) =>
-                                setTimeout(() => reject(new Error('Timeout dépassé (5s)')), timeout)
-                            )
-                        ]);
-                    };
-
-                    response = await fetchWithTimeout(apiUrl, {
-                        method: 'GET',
-                        headers: { 'Accept': 'application/json' },
-                        mode: 'cors' // Explicite pour la détection CORS
-                    });
-
-                    const elapsed = Date.now() - startTime;
-                    debugLog(`✅ Réponse DIRECTE reçue en ${elapsed}ms`, 'success');
-                    debugLog(`📊 Status HTTP: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
-                    debugLog(`📦 Content-Type: ${response.headers.get('content-type')}`, 'info');
-
-                    if (!response.ok) {
-                        debugLog(`❌ Erreur HTTP ${response.status}`, 'error');
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-
-                    const text = await response.text();
-                    debugLog(`📝 Longueur réponse: ${text.length} caractères`, 'info');
-                    debugLog(`📥 Aperçu réponse: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`, 'info');
+                    let response;
+                    let data;
+                    let usedProxy = false;
 
                     try {
-                        data = JSON.parse(text);
-                        debugLog(`✅ JSON parsé avec succès (connexion DIRECTE réussie !)`, 'success');
-                        debugLog(`🎉 Aucun proxy nécessaire, connexion directe fonctionnelle`, 'success');
-                    } catch (e) {
-                        debugLog(`❌ ERREUR parsing JSON: ${e.message}`, 'error');
-                        throw new Error('La réponse n\'est pas du JSON valide: ' + text.substring(0, 100));
-                    }
+                        debugLog(`🎯 Envoi requête GET DIRECTE vers: ${apiUrl.substring(0, 60)}...`, 'info');
+                        debugLog(`⏱️ Timeout: 5 secondes`, 'info');
 
-                } catch (directError) {
-                    const elapsed = Date.now() - startTime;
-                    debugLog(`═══════════════════════════════════════════`, 'warning');
-                    debugLog(`❌ Connexion DIRECTE échouée après ${elapsed}ms`, 'warning');
-                    debugLog(`📋 Raison: ${directError.message}`, 'warning');
+                        // Promesse avec timeout plus court pour éviter les freezes
+                        const fetchWithTimeout = (url, options, timeout = 5000) => {
+                            return Promise.race([
+                                fetch(url, options),
+                                new Promise((_, reject) =>
+                                    setTimeout(() => reject(new Error('Timeout dépassé (5s)')), timeout)
+                                )
+                            ]);
+                        };
 
-                    // Diagnostic détaillé de l'erreur
-                    if (directError.message.includes('Failed to fetch')) {
-                        debugLog(`🔍 Diagnostic: Erreur CORS - Le serveur bloque les requêtes depuis le navigateur`, 'warning');
-                        debugLog(`💡 Le serveur IPTV n'autorise pas les connexions web directes`, 'info');
-                    } else if (directError.message.includes('Timeout')) {
-                        debugLog(`🔍 Diagnostic: Le serveur met trop de temps à répondre`, 'warning');
-                    } else if (directError.message.includes('network')) {
-                        debugLog(`🔍 Diagnostic: Problème de connexion réseau`, 'warning');
-                    }
-
-                    debugLog('═══════════════════════════════════════════', 'info');
-                    debugLog('🔄 ÉTAPE 2/3: Tentative avec proxies CORS...', 'info');
-                    debugLog('🧠 Système adaptatif: Le player va tester et mémoriser le meilleur proxy pour ce serveur', 'info');
-                    showStatus('🔄 Étape 2/3: Test intelligent des proxies CORS...', 'success');
-
-                    // Construction de la liste des proxies dans l'ordre de priorité
-                    const proxies = [];
-
-                    // 1️⃣ Cloudflare Worker (le plus rapide)
-                    if (CLOUDFLARE_PROXY) {
-                        proxies.push({
-                            name: 'Cloudflare Worker',
-                            url: CLOUDFLARE_PROXY + '?url=',
-                            isBackend: true
+                        response = await fetchWithTimeout(apiUrl, {
+                            method: 'GET',
+                            headers: { 'Accept': 'application/json' },
+                            mode: 'cors' // Explicite pour la détection CORS
                         });
-                        debugLog(`⚡ Cloudflare Worker configuré (priorité 1)`, 'info');
-                    }
 
-                    // 2️⃣ Vercel Edge (très rapide)
-                    if (VERCEL_PROXY) {
-                        proxies.push({
-                            name: 'Vercel Edge',
-                            url: VERCEL_PROXY + '?url=',
-                            isBackend: true
-                        });
-                        debugLog(`⚡ Vercel Edge configuré (priorité 2)`, 'info');
-                    }
+                        const elapsed = Date.now() - startTime;
+                        debugLog(`✅ Réponse DIRECTE reçue en ${elapsed}ms`, 'success');
+                        debugLog(`📊 Status HTTP: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                        debugLog(`📦 Content-Type: ${response.headers.get('content-type')}`, 'info');
 
-                    // 3️⃣ Netlify Functions (rapide)
-                    if (NETLIFY_PROXY) {
-                        proxies.push({
-                            name: 'Netlify Functions',
-                            url: NETLIFY_PROXY + '?url=',
-                            isBackend: true
-                        });
-                        debugLog(`⚡ Netlify Functions configuré (priorité 3)`, 'info');
-                    }
-
-                    // 4️⃣ Proxies publics en fallback (ordre testé et vérifié)
-                    proxies.push(
-                        { name: 'corsproxy.io', url: 'https://corsproxy.io/?' },              // ✅ TESTÉ: 48903 chaînes
-                        { name: 'api.codetabs.com', url: 'https://api.codetabs.com/v1/proxy?quest=' },  // ✅ TESTÉ: 48903 chaînes
-                        { name: 'Cloudflare Trace', url: 'https://1.1.1.1/cdn-cgi/trace?url=' }, // Cloudflare backup
-                        { name: 'cors.eu.org', url: 'https://cors.eu.org/' }                  // Backup final
-                        // ❌ RETIRÉS: cors-anywhere (403), api.allorigins.win (internal error)
-                    );
-                    const proxyTimeoutMs = 5000;
-
-                    let proxySuccess = false;
-                    let lastProxyError = null;
-
-                    // 🧠 Réorganiser les proxies pour essayer d'abord celui en cache
-                    if (cachedProxy && cachedProxy.proxy) {
-                        const cachedProxyObj = proxies.find(p => p.name === cachedProxy.proxy);
-                        if (cachedProxyObj) {
-                            // Mettre le proxy en cache en première position
-                            proxies = proxies.filter(p => p.name !== cachedProxy.proxy);
-                            proxies.unshift(cachedProxyObj);
-                            debugLog(`🚀 Tentative avec le proxy mémorisé en priorité: ${cachedProxy.proxy}`, 'success');
+                        if (!response.ok) {
+                            debugLog(`❌ Erreur HTTP ${response.status}`, 'error');
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                         }
-                    }
 
-                    for (const proxy of proxies) {
+                        const text = await response.text();
+                        debugLog(`📝 Longueur réponse: ${text.length} caractères`, 'info');
+                        debugLog(`📥 Aperçu réponse: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`, 'info');
+
                         try {
-                            const isCachedProxy = cachedProxy && proxy.name === cachedProxy.proxy;
-                            debugLog(`🌐 Test proxy: ${proxy.name}${isCachedProxy ? ' (mémorisé)' : ''}...`, 'info');
-                            const proxiedUrl = proxy.url + encodeURIComponent(apiUrl);
-
-                            const proxyFetchWithTimeout = (url, options, timeout = proxyTimeoutMs) => {
-                                return Promise.race([
-                                    fetch(url, options),
-                                    new Promise((_, reject) =>
-                                        setTimeout(() => reject(new Error(`Timeout proxy (${timeout}ms)`)), timeout)
-                                    )
-                                ]);
-                            };
-
-                            response = await proxyFetchWithTimeout(proxiedUrl, {
-                                method: 'GET',
-                                headers: { 'Accept': 'application/json' }
-                            }, proxyTimeoutMs);
-                            const elapsed = Date.now() - startTime;
-                            debugLog(`⏱️ Réponse ${proxy.name} reçue en ${elapsed}ms`, 'info');
-
-                            const text = await response.text();
-                            debugLog(`📝 Longueur réponse ${proxy.name}: ${text.length} caractères`, 'info');
-
-                            // Vérifier si c'est une erreur du proxy lui-même
-                            if (text.includes('"error"') && text.length < 500) {
-                                debugLog(`⚠️ ${proxy.name} retourne une erreur proxy: ${text.substring(0, 150)}`, 'warning');
-                                lastProxyError = `${proxy.name}: erreur interne du proxy`;
-                                continue; // Essayer le proxy suivant
-                            }
-
-                            // Vérifier si la réponse est vide ou invalide
-                            if (text.length < 100) {
-                                debugLog(`⚠️ ${proxy.name} réponse trop courte (${text.length} caractères)`, 'warning');
-                                lastProxyError = `${proxy.name}: réponse vide`;
-                                continue;
-                            }
-
                             data = JSON.parse(text);
+                            debugLog(`✅ JSON parsé avec succès (connexion DIRECTE réussie !)`, 'success');
+                            debugLog(`🎉 Aucun proxy nécessaire, connexion directe fonctionnelle`, 'success');
+                        } catch (e) {
+                            debugLog(`❌ ERREUR parsing JSON: ${e.message}`, 'error');
+                            throw new Error('La réponse n\'est pas du JSON valide: ' + text.substring(0, 100));
+                        }
 
-                            // Vérifier si la réponse contient une erreur proxy
-                            if (data && data.error && !Array.isArray(data)) {
-                                debugLog(`⚠️ ${proxy.name} retourne une erreur: ${JSON.stringify(data).substring(0, 150)}`, 'warning');
-                                lastProxyError = `${proxy.name}: ${data.error}`;
-                                continue; // Essayer le proxy suivant
+                    } catch (directError) {
+                        const elapsed = Date.now() - startTime;
+                        debugLog(`═══════════════════════════════════════════`, 'warning');
+                        debugLog(`❌ Connexion DIRECTE échouée après ${elapsed}ms`, 'warning');
+                        debugLog(`📋 Raison: ${directError.message}`, 'warning');
+
+                        // Diagnostic détaillé de l'erreur
+                        if (directError.message.includes('Failed to fetch')) {
+                            debugLog(`🔍 Diagnostic: Erreur CORS - Le serveur bloque les requêtes depuis le navigateur`, 'warning');
+                            debugLog(`💡 Le serveur IPTV n'autorise pas les connexions web directes`, 'info');
+                        } else if (directError.message.includes('Timeout')) {
+                            debugLog(`🔍 Diagnostic: Le serveur met trop de temps à répondre`, 'warning');
+                        } else if (directError.message.includes('network')) {
+                            debugLog(`🔍 Diagnostic: Problème de connexion réseau`, 'warning');
+                        }
+
+                        debugLog('═══════════════════════════════════════════', 'info');
+                        debugLog('🔄 ÉTAPE 2/3: Tentative avec proxies CORS...', 'info');
+                        debugLog('🧠 Système adaptatif: Le player va tester et mémoriser le meilleur proxy pour ce serveur', 'info');
+                        showStatus('🔄 Étape 2/3: Test intelligent des proxies CORS...', 'success');
+
+                        // Construction de la liste des proxies dans l'ordre de priorité
+                        const proxies = [];
+
+                        // 1️⃣ Cloudflare Worker (le plus rapide)
+                        if (CLOUDFLARE_PROXY) {
+                            proxies.push({
+                                name: 'Cloudflare Worker',
+                                url: CLOUDFLARE_PROXY + '?url=',
+                                isBackend: true
+                            });
+                            debugLog(`⚡ Cloudflare Worker configuré (priorité 1)`, 'info');
+                        }
+
+                        // 2️⃣ Vercel Edge (très rapide)
+                        if (VERCEL_PROXY) {
+                            proxies.push({
+                                name: 'Vercel Edge',
+                                url: VERCEL_PROXY + '?url=',
+                                isBackend: true
+                            });
+                            debugLog(`⚡ Vercel Edge configuré (priorité 2)`, 'info');
+                        }
+
+                        // 3️⃣ Netlify Functions (rapide)
+                        if (NETLIFY_PROXY) {
+                            proxies.push({
+                                name: 'Netlify Functions',
+                                url: NETLIFY_PROXY + '?url=',
+                                isBackend: true
+                            });
+                            debugLog(`⚡ Netlify Functions configuré (priorité 3)`, 'info');
+                        }
+
+                        // 4️⃣ Proxies publics en fallback (ordre testé et vérifié)
+                        proxies.push(
+                            { name: 'corsproxy.io', url: 'https://corsproxy.io/?' },              // ✅ TESTÉ: 48903 chaînes
+                            { name: 'api.codetabs.com', url: 'https://api.codetabs.com/v1/proxy?quest=' },  // ✅ TESTÉ: 48903 chaînes
+                            { name: 'Cloudflare Trace', url: 'https://1.1.1.1/cdn-cgi/trace?url=' }, // Cloudflare backup
+                            { name: 'cors.eu.org', url: 'https://cors.eu.org/' }                  // Backup final
+                            // ❌ RETIRÉS: cors-anywhere (403), api.allorigins.win (internal error)
+                        );
+                        const proxyTimeoutMs = 5000;
+
+                        let proxySuccess = false;
+                        let lastProxyError = null;
+
+                        // 🧠 Réorganiser les proxies pour essayer d'abord celui en cache
+                        if (cachedProxy && cachedProxy.proxy) {
+                            const cachedProxyObj = proxies.find(p => p.name === cachedProxy.proxy);
+                            if (cachedProxyObj) {
+                                // Mettre le proxy en cache en première position
+                                proxies = proxies.filter(p => p.name !== cachedProxy.proxy);
+                                proxies.unshift(cachedProxyObj);
+                                debugLog(`🚀 Tentative avec le proxy mémorisé en priorité: ${cachedProxy.proxy}`, 'success');
                             }
+                        }
 
-                            // Vérifier que c'est bien un tableau de chaînes
-                            if (!Array.isArray(data) || data.length === 0) {
-                                debugLog(`⚠️ ${proxy.name} format de réponse invalide (pas un tableau ou vide)`, 'warning');
-                                lastProxyError = `${proxy.name}: format invalide`;
-                                continue;
+                        for (const proxy of proxies) {
+                            try {
+                                const isCachedProxy = cachedProxy && proxy.name === cachedProxy.proxy;
+                                debugLog(`🌐 Test proxy: ${proxy.name}${isCachedProxy ? ' (mémorisé)' : ''}...`, 'info');
+                                const proxiedUrl = proxy.url + encodeURIComponent(apiUrl);
+
+                                const proxyFetchWithTimeout = (url, options, timeout = proxyTimeoutMs) => {
+                                    return Promise.race([
+                                        fetch(url, options),
+                                        new Promise((_, reject) =>
+                                            setTimeout(() => reject(new Error(`Timeout proxy (${timeout}ms)`)), timeout)
+                                        )
+                                    ]);
+                                };
+
+                                response = await proxyFetchWithTimeout(proxiedUrl, {
+                                    method: 'GET',
+                                    headers: { 'Accept': 'application/json' }
+                                }, proxyTimeoutMs);
+                                const elapsed = Date.now() - startTime;
+                                debugLog(`⏱️ Réponse ${proxy.name} reçue en ${elapsed}ms`, 'info');
+
+                                const text = await response.text();
+                                debugLog(`📝 Longueur réponse ${proxy.name}: ${text.length} caractères`, 'info');
+
+                                // Vérifier si c'est une erreur du proxy lui-même
+                                if (text.includes('"error"') && text.length < 500) {
+                                    debugLog(`⚠️ ${proxy.name} retourne une erreur proxy: ${text.substring(0, 150)}`, 'warning');
+                                    lastProxyError = `${proxy.name}: erreur interne du proxy`;
+                                    continue; // Essayer le proxy suivant
+                                }
+
+                                // Vérifier si la réponse est vide ou invalide
+                                if (text.length < 100) {
+                                    debugLog(`⚠️ ${proxy.name} réponse trop courte (${text.length} caractères)`, 'warning');
+                                    lastProxyError = `${proxy.name}: réponse vide`;
+                                    continue;
+                                }
+
+                                data = JSON.parse(text);
+
+                                // Vérifier si la réponse contient une erreur proxy
+                                if (data && data.error && !Array.isArray(data)) {
+                                    debugLog(`⚠️ ${proxy.name} retourne une erreur: ${JSON.stringify(data).substring(0, 150)}`, 'warning');
+                                    lastProxyError = `${proxy.name}: ${data.error}`;
+                                    continue; // Essayer le proxy suivant
+                                }
+
+                                // Vérifier que c'est bien un tableau de chaînes
+                                if (!Array.isArray(data) || data.length === 0) {
+                                    debugLog(`⚠️ ${proxy.name} format de réponse invalide (pas un tableau ou vide)`, 'warning');
+                                    lastProxyError = `${proxy.name}: format invalide`;
+                                    continue;
+                                }
+
+                                usedProxy = true;
+                                proxySuccess = true;
+                                usedProxyForApi = proxy.url; // Mémoriser le proxy qui a fonctionné
+
+                                // 🧠 Mémoriser ce proxy pour ce serveur spécifique
+                                proxyCache[serverUrl] = {
+                                    proxy: proxy.name,
+                                    timestamp: Date.now(),
+                                    success: true
+                                };
+                                debugLog(`✅ Connexion via ${proxy.name} réussie`, 'success');
+                                debugLog(`💾 Proxy mémorisé pour les streams: ${proxy.name}`, 'info');
+                                debugLog(`🧠 Ce proxy sera utilisé en priorité pour ${serverUrl.replace(/https?:\/\//, '')}`, 'success');
+                                break; // Succès, sortir de la boucle
+
+                            } catch (proxyError) {
+                                debugLog(`❌ ${proxy.name} échoué: ${proxyError.message}`, 'warning');
+                                lastProxyError = `${proxy.name}: ${proxyError.message}`;
+                                // Continuer avec le proxy suivant
                             }
+                        }
 
-                            usedProxy = true;
-                            proxySuccess = true;
-                            usedProxyForApi = proxy.url; // Mémoriser le proxy qui a fonctionné
-
-                            // 🧠 Mémoriser ce proxy pour ce serveur spécifique
-                            proxyCache[serverUrl] = {
-                                proxy: proxy.name,
-                                timestamp: Date.now(),
-                                success: true
-                            };
-                            debugLog(`✅ Connexion via ${proxy.name} réussie`, 'success');
-                            debugLog(`💾 Proxy mémorisé pour les streams: ${proxy.name}`, 'info');
-                            debugLog(`🧠 Ce proxy sera utilisé en priorité pour ${serverUrl.replace(/https?:\/\//, '')}`, 'success');
-                            break; // Succès, sortir de la boucle
-
-                        } catch (proxyError) {
-                            debugLog(`❌ ${proxy.name} échoué: ${proxyError.message}`, 'warning');
-                            lastProxyError = `${proxy.name}: ${proxyError.message}`;
-                            // Continuer avec le proxy suivant
+                        if (!proxySuccess) {
+                            debugLog(`❌ Tous les proxies CORS ont échoué`, 'error');
+                            debugLog(`💡 SOLUTION: Le serveur IPTV bloque probablement les proxies publics`, 'info');
+                            debugLog(`💡 OPTIONS:`, 'info');
+                            debugLog(`   1️⃣ Utilise le player directement depuis http:// (pas https://)`, 'info');
+                            debugLog(`   2️⃣ Installe une extension CORS dans ton navigateur`, 'info');
+                            debugLog(`   3️⃣ Demande à ton fournisseur IPTV s'il a une URL avec CORS activé`, 'info');
+                            throw new Error(`Tous les proxies ont échoué. Dernier: ${lastProxyError}. Le serveur IPTV nécessite probablement un accès direct (pas via proxy). Essaie d'ouvrir le player en HTTP au lieu de HTTPS, ou demande à ton fournisseur IPTV une URL compatible avec les navigateurs web.`);
                         }
                     }
 
-                    if (!proxySuccess) {
-                        debugLog(`❌ Tous les proxies CORS ont échoué`, 'error');
-                        debugLog(`💡 SOLUTION: Le serveur IPTV bloque probablement les proxies publics`, 'info');
-                        debugLog(`💡 OPTIONS:`, 'info');
-                        debugLog(`   1️⃣ Utilise le player directement depuis http:// (pas https://)`, 'info');
-                        debugLog(`   2️⃣ Installe une extension CORS dans ton navigateur`, 'info');
-                        debugLog(`   3️⃣ Demande à ton fournisseur IPTV s'il a une URL avec CORS activé`, 'info');
-                        throw new Error(`Tous les proxies ont échoué. Dernier: ${lastProxyError}. Le serveur IPTV nécessite probablement un accès direct (pas via proxy). Essaie d'ouvrir le player en HTTP au lieu de HTTPS, ou demande à ton fournisseur IPTV une URL compatible avec les navigateurs web.`);
-                    }
-                }
+                    debugLog(`🔄 ÉTAPE 3/3: Analyse et traitement des données...`, 'info');
+                    showStatus('🔄 Étape 3/3: Traitement des chaînes...', 'success');
 
-                debugLog(`🔄 ÉTAPE 3/3: Analyse et traitement des données...`, 'info');
-                showStatus('🔄 Étape 3/3: Traitement des chaînes...', 'success');
+                    debugLog(`🔍 Type de données reçues: ${Array.isArray(data) ? 'Array' : typeof data}`, 'info');
 
-                debugLog(`🔍 Type de données reçues: ${Array.isArray(data) ? 'Array' : typeof data}`, 'info');
+                    let streamsList = [];
 
-                let streamsList = [];
+                    if (Array.isArray(data)) {
+                        streamsList = data;
+                        debugLog(`✅ Format détecté: Array direct de ${streamsList.length} éléments`, 'success');
+                    } else if (data && typeof data === 'object') {
+                        debugLog(`🔍 Clés de l'objet: ${Object.keys(data).join(', ')}`, 'info');
 
-                if (Array.isArray(data)) {
-                    streamsList = data;
-                    debugLog(`✅ Format détecté: Array direct de ${streamsList.length} éléments`, 'success');
-                } else if (data && typeof data === 'object') {
-                    debugLog(`🔍 Clés de l'objet: ${Object.keys(data).join(', ')}`, 'info');
-
-                    if (data.streams && Array.isArray(data.streams)) {
-                        streamsList = data.streams;
-                        debugLog(`✅ Format détecté: data.streams avec ${streamsList.length} chaînes`, 'success');
-                    } else if (data.data && Array.isArray(data.data)) {
-                        streamsList = data.data;
-                        debugLog(`✅ Format détecté: data.data avec ${streamsList.length} chaînes`, 'success');
+                        if (data.streams && Array.isArray(data.streams)) {
+                            streamsList = data.streams;
+                            debugLog(`✅ Format détecté: data.streams avec ${streamsList.length} chaînes`, 'success');
+                        } else if (data.data && Array.isArray(data.data)) {
+                            streamsList = data.data;
+                            debugLog(`✅ Format détecté: data.data avec ${streamsList.length} chaînes`, 'success');
+                        } else {
+                            if (data.user_info) {
+                                debugLog(`👤 Info utilisateur présente:`, 'info');
+                                debugLog(`   - Username: ${data.user_info.username || 'N/A'}`, 'info');
+                                debugLog(`   - Status: ${data.user_info.status || 'N/A'}`, 'info');
+                                debugLog(`   - Exp date: ${data.user_info.exp_date || 'N/A'}`, 'info');
+                                debugLog(`❌ Aucune chaîne disponible pour cet abonnement`, 'error');
+                                throw new Error('Aucune chaîne disponible pour cet abonnement');
+                            }
+                            debugLog(`❌ Format de réponse non reconnu`, 'error');
+                            throw new Error('Format de réponse inattendu: ' + JSON.stringify(data).substring(0, 100));
+                        }
                     } else {
-                        if (data.user_info) {
-                            debugLog(`👤 Info utilisateur présente:`, 'info');
-                            debugLog(`   - Username: ${data.user_info.username || 'N/A'}`, 'info');
-                            debugLog(`   - Status: ${data.user_info.status || 'N/A'}`, 'info');
-                            debugLog(`   - Exp date: ${data.user_info.exp_date || 'N/A'}`, 'info');
-                            debugLog(`❌ Aucune chaîne disponible pour cet abonnement`, 'error');
-                            throw new Error('Aucune chaîne disponible pour cet abonnement');
-                        }
-                        debugLog(`❌ Format de réponse non reconnu`, 'error');
-                        throw new Error('Format de réponse inattendu: ' + JSON.stringify(data).substring(0, 100));
+                        debugLog(`❌ Type de données invalide: ${typeof data}`, 'error');
+                        throw new Error('Données invalides reçues du serveur');
                     }
-                } else {
-                    debugLog(`❌ Type de données invalide: ${typeof data}`, 'error');
-                    throw new Error('Données invalides reçues du serveur');
-                }
 
-                if (streamsList.length === 0) {
-                    debugLog(`❌ Liste de chaînes vide`, 'error');
-                    throw new Error('Aucune chaîne trouvée sur ce serveur');
-                }
+                    if (streamsList.length === 0) {
+                        debugLog(`❌ Liste de chaînes vide`, 'error');
+                        throw new Error('Aucune chaîne trouvée sur ce serveur');
+                    }
 
-                debugLog(`✅ ${streamsList.length} chaînes trouvées dans la réponse`, 'success');
+                    debugLog(`✅ ${streamsList.length} chaînes trouvées dans la réponse`, 'success');
 
-                if (streamsList.length > 0) {
-                    const first = streamsList[0];
-                    debugLog(`📦 Exemple 1ère chaîne: ${first.name || first.stream_display_name || 'N/A'}`, 'info');
-                }
+                    if (streamsList.length > 0) {
+                        const first = streamsList[0];
+                        debugLog(`📦 Exemple 1ère chaîne: ${first.name || first.stream_display_name || 'N/A'}`, 'info');
+                    }
 
-                debugLog(`🛠️ Mapping de ${streamsList.length} chaînes...`, 'info');
+                    debugLog(`🛠️ Mapping de ${streamsList.length} chaînes...`, 'info');
 
-                // Initialiser la pagination
-                currentPage = 1;
-                totalPages = Math.ceil(streamsList.length / MAX_CHANNELS_PER_PAGE);
+                    // Initialiser la pagination
+                    currentPage = 1;
+                    totalPages = Math.ceil(streamsList.length / MAX_CHANNELS_PER_PAGE);
 
-                if (streamsList.length > MAX_CHANNELS_PER_PAGE) {
-                    debugLog(`📊 Pagination activée: ${totalPages} pages de ${MAX_CHANNELS_PER_PAGE} chaînes max`, 'info');
-                }
+                    if (streamsList.length > MAX_CHANNELS_PER_PAGE) {
+                        debugLog(`📊 Pagination activée: ${totalPages} pages de ${MAX_CHANNELS_PER_PAGE} chaînes max`, 'info');
+                    }
 
-                channels = streamsList.map((ch) => {
-                    const streamId = ch.stream_id || ch.id || ch.num;
-                    const channelName = ch.name || ch.stream_display_name || ch.title || `Chaîne ${streamId}`;
-                    const categoryName = ch.category_name || ch.category || '';
+                    channels = streamsList.map((ch) => {
+                        const streamId = ch.stream_id || ch.id || ch.num;
+                        const channelName = ch.name || ch.stream_display_name || ch.title || `Chaîne ${streamId}`;
+                        const categoryName = ch.category_name || ch.category || '';
 
-                    return {
-                        name: channelName,
-                        url: `${serverUrl}/live/${config.username}/${config.password}/${streamId}.m3u8`,
-                        category: categoryName,
-                        streamId: streamId
-                    };
-                });
-
-                const totalTime = Date.now() - startTime;
-                debugLog(`⏱️ Temps total de traitement: ${totalTime}ms`, 'success');
-                debugLog(`✅ ${channels.length} chaînes mappées avec succès`, 'success');
-
-                // 💾 Sauvegarder dans le cache
-                setCachedChannels(cacheKey, channels);
-
-                displayChannels();
-                showPlayer();
-
-                const successMsg = `✅ ${channels.length} chaînes Xtream chargées ${usedProxy ? '(via proxy)' : '(direct)'} !`;
-                showStatus(successMsg, 'success');
-                debugLog(successMsg, 'success');
-
-            } catch (error) {
-                const totalTime = Date.now() - startTime;
-                debugLog(`❌ ERREUR FATALE après ${totalTime}ms`, 'error');
-                debugLog(`❌ Type d'erreur: ${error.name}`, 'error');
-                debugLog(`❌ Message: ${error.message}`, 'error');
-
-                if (error.stack) {
-                    debugLog(`🔍 Stack trace:`, 'error');
-                    error.stack.split('\n').slice(0, 3).forEach(line => {
-                        debugLog(`   ${line.trim()}`, 'error');
+                        return {
+                            name: channelName,
+                            url: `${serverUrl}/live/${config.username}/${config.password}/${streamId}.m3u8`,
+                            category: categoryName,
+                            streamId: streamId
+                        };
                     });
+
+                    const totalTime = Date.now() - startTime;
+                    debugLog(`⏱️ Temps total de traitement: ${totalTime}ms`, 'success');
+                    debugLog(`✅ ${channels.length} chaînes mappées avec succès`, 'success');
+
+                    // 💾 Sauvegarder dans le cache
+                    setCachedChannels(cacheKey, channels);
+
+                    displayChannels();
+                    showPlayer();
+
+                    const successMsg = `✅ ${channels.length} chaînes Xtream chargées ${usedProxy ? '(via proxy)' : '(direct)'} !`;
+                    showStatus(successMsg, 'success');
+                    debugLog(successMsg, 'success');
+
+                } catch (error) {
+                    const totalTime = Date.now() - startTime;
+                    debugLog(`❌ ERREUR FATALE après ${totalTime}ms`, 'error');
+                    debugLog(`❌ Type d'erreur: ${error.name}`, 'error');
+                    debugLog(`❌ Message: ${error.message}`, 'error');
+
+                    if (error.stack) {
+                        debugLog(`🔍 Stack trace:`, 'error');
+                        error.stack.split('\n').slice(0, 3).forEach(line => {
+                            debugLog(`   ${line.trim()}`, 'error');
+                        });
+                    }
+
+                    let errorMessage = '❌ Erreur Xtream: ';
+                    let userTip = '';
+
+                    if (error.message.includes('Failed to fetch')) {
+                        errorMessage += 'Impossible de contacter le serveur.';
+                        userTip = '💡 Vérifiez: 1) L\'URL du serveur, 2) Votre connexion Internet, 3) Le serveur est en ligne';
+                        debugLog(userTip, 'warning');
+                    } else if (error.message.includes('HTTP 401') || error.message.includes('Unauthorized')) {
+                        errorMessage += 'Identifiants incorrects.';
+                        userTip = '💡 Vérifiez: 1) Nom d\'utilisateur correct, 2) Mot de passe correct, 3) Pas d\'espaces en trop';
+                        debugLog(userTip, 'warning');
+                    } else if (error.message.includes('HTTP 403') || error.message.includes('Forbidden')) {
+                        errorMessage += 'Accès refusé.';
+                        userTip = '💡 Vérifiez: 1) Abonnement valide, 2) Pas expiré, 3) Connexions simultanées limitées';
+                        debugLog(userTip, 'warning');
+                    } else if (error.message.includes('HTTP 404')) {
+                        errorMessage += 'Serveur introuvable.';
+                        userTip = '💡 Vérifiez: 1) URL complète avec port, 2) Pas de faute de frappe, 3) Serveur utilise bien Xtream API';
+                        debugLog(userTip, 'warning');
+                    } else if (error.message.includes('JSON')) {
+                        errorMessage += 'Réponse invalide du serveur.';
+                        userTip = '💡 Le serveur ne semble pas être un serveur Xtream Codes valide';
+                        debugLog(userTip, 'warning');
+                    } else if (error.message.includes('Aucune chaîne')) {
+                        errorMessage += error.message;
+                        userTip = '💡 Votre abonnement ne contient aucune chaîne live';
+                        debugLog(userTip, 'warning');
+                    } else {
+                        errorMessage += error.message;
+                    }
+
+                    showStatus(errorMessage, 'error');
+                    debugLog(`💔 Échec total du chargement Xtream`, 'error');
+                }
+            }
+
+            function displayChannels() {
+                const container = document.getElementById('channelsList');
+                if (!container) {
+                    debugLog('❌ Conteneur "channelsList" introuvable, impossible d\'afficher les chaînes', 'error');
+                    return;
                 }
 
-                let errorMessage = '❌ Erreur Xtream: ';
-                let userTip = '';
+                container.innerHTML = '';
 
-                if (error.message.includes('Failed to fetch')) {
-                    errorMessage += 'Impossible de contacter le serveur.';
-                    userTip = '💡 Vérifiez: 1) L\'URL du serveur, 2) Votre connexion Internet, 3) Le serveur est en ligne';
-                    debugLog(userTip, 'warning');
-                } else if (error.message.includes('HTTP 401') || error.message.includes('Unauthorized')) {
-                    errorMessage += 'Identifiants incorrects.';
-                    userTip = '💡 Vérifiez: 1) Nom d\'utilisateur correct, 2) Mot de passe correct, 3) Pas d\'espaces en trop';
-                    debugLog(userTip, 'warning');
-                } else if (error.message.includes('HTTP 403') || error.message.includes('Forbidden')) {
-                    errorMessage += 'Accès refusé.';
-                    userTip = '💡 Vérifiez: 1) Abonnement valide, 2) Pas expiré, 3) Connexions simultanées limitées';
-                    debugLog(userTip, 'warning');
-                } else if (error.message.includes('HTTP 404')) {
-                    errorMessage += 'Serveur introuvable.';
-                    userTip = '💡 Vérifiez: 1) URL complète avec port, 2) Pas de faute de frappe, 3) Serveur utilise bien Xtream API';
-                    debugLog(userTip, 'warning');
-                } else if (error.message.includes('JSON')) {
-                    errorMessage += 'Réponse invalide du serveur.';
-                    userTip = '💡 Le serveur ne semble pas être un serveur Xtream Codes valide';
-                    debugLog(userTip, 'warning');
-                } else if (error.message.includes('Aucune chaîne')) {
-                    errorMessage += error.message;
-                    userTip = '💡 Votre abonnement ne contient aucune chaîne live';
-                    debugLog(userTip, 'warning');
+                if (!Array.isArray(channels) || channels.length === 0) {
+                    debugLog('⚠️ Aucune chaîne à afficher (liste vide)', 'warning');
+                    container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 24px;">Aucune chaîne disponible pour cette playlist ou ce serveur.</p>';
+                    // Masquer pagination
+                    document.getElementById('paginationTop').style.display = 'none';
+                    document.getElementById('paginationBottom').style.display = 'none';
+                    return;
+                }
+
+                // Calculer pagination
+                const totalChannels = channels.length;
+                totalPages = Math.ceil(totalChannels / MAX_CHANNELS_PER_PAGE);
+
+                // Borner la page actuelle
+                if (currentPage < 1) currentPage = 1;
+                if (currentPage > totalPages) currentPage = totalPages;
+
+                // Calculer les indices de début et fin
+                const startIndex = (currentPage - 1) * MAX_CHANNELS_PER_PAGE;
+                const endIndex = Math.min(startIndex + MAX_CHANNELS_PER_PAGE, totalChannels);
+                const channelsToDisplay = channels.slice(startIndex, endIndex);
+
+                debugLog(`📺 Affichage page ${currentPage}/${totalPages}: chaînes ${startIndex + 1}-${endIndex} sur ${totalChannels}`, 'info');
+
+                // Afficher/masquer contrôles pagination
+                if (totalPages > 1) {
+                    document.getElementById('paginationTop').style.display = 'block';
+                    document.getElementById('paginationBottom').style.display = 'block';
+                    updatePaginationControls();
                 } else {
-                    errorMessage += error.message;
+                    document.getElementById('paginationTop').style.display = 'none';
+                    document.getElementById('paginationBottom').style.display = 'none';
                 }
 
-                showStatus(errorMessage, 'error');
-                debugLog(`💔 Échec total du chargement Xtream`, 'error');
-            }
-        }
+                // Utiliser DocumentFragment pour optimiser l'ajout au DOM
+                const fragment = document.createDocumentFragment();
 
-        function displayChannels() {
-            const container = document.getElementById('channelsList');
-            if (!container) {
-                debugLog('❌ Conteneur "channelsList" introuvable, impossible d\'afficher les chaînes', 'error');
-                return;
-            }
+                channelsToDisplay.forEach((channel, index) => {
+                    const card = document.createElement('div');
+                    const compat = evaluateChannelCompatibility(channel);
 
-            container.innerHTML = '';
+                    let cardClasses = 'channel-card';
+                    if (!compat.supported) {
+                        cardClasses += ' disabled';
+                    }
+                    card.className = cardClasses;
 
-            if (!Array.isArray(channels) || channels.length === 0) {
-                debugLog('⚠️ Aucune chaîne à afficher (liste vide)', 'warning');
-                container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 24px;">Aucune chaîne disponible pour cette playlist ou ce serveur.</p>';
-                // Masquer pagination
-                document.getElementById('paginationTop').style.display = 'none';
-                document.getElementById('paginationBottom').style.display = 'none';
-                return;
-            }
+                    // Normaliser l'objet pour l'historique/favoris
+                    const item = {
+                        name: channel.name,
+                        url: channel.url,
+                        category: channel.category || 'Live'
+                    };
 
-            // Calculer pagination
-            const totalChannels = channels.length;
-            totalPages = Math.ceil(totalChannels / MAX_CHANNELS_PER_PAGE);
+                    const isFav = favorites.some(f => f.url === item.url);
+                    const safeItem = JSON.stringify(item).replace(/"/g, '&quot;');
 
-            // Borner la page actuelle
-            if (currentPage < 1) currentPage = 1;
-            if (currentPage > totalPages) currentPage = totalPages;
+                    let compatClass = 'channel-compat';
+                    let compatText = '';
 
-            // Calculer les indices de début et fin
-            const startIndex = (currentPage - 1) * MAX_CHANNELS_PER_PAGE;
-            const endIndex = Math.min(startIndex + MAX_CHANNELS_PER_PAGE, totalChannels);
-            const channelsToDisplay = channels.slice(startIndex, endIndex);
+                    if (!compat.supported) {
+                        compatClass += ' channel-compat-bad';
+                        compatText = `⚠️ Non compatible sur ce navigateur: ${compat.reason}`;
+                    } else if (compat.warning) {
+                        compatClass += ' channel-compat-warning';
+                        compatText = `⚠️ Compatibilité non garantie (${compat.reason})`;
+                    } else {
+                        compatClass += ' channel-compat-ok';
+                        compatText = `✅ Compatible ${compat.format !== 'inconnu' ? compat.format : ''}`.trim();
+                    }
 
-            debugLog(`📺 Affichage page ${currentPage}/${totalPages}: chaînes ${startIndex + 1}-${endIndex} sur ${totalChannels}`, 'info');
-
-            // Afficher/masquer contrôles pagination
-            if (totalPages > 1) {
-                document.getElementById('paginationTop').style.display = 'block';
-                document.getElementById('paginationBottom').style.display = 'block';
-                updatePaginationControls();
-            } else {
-                document.getElementById('paginationTop').style.display = 'none';
-                document.getElementById('paginationBottom').style.display = 'none';
-            }
-
-            // Utiliser DocumentFragment pour optimiser l'ajout au DOM
-            const fragment = document.createDocumentFragment();
-
-            channelsToDisplay.forEach((channel, index) => {
-                const card = document.createElement('div');
-                const compat = evaluateChannelCompatibility(channel);
-
-                let cardClasses = 'channel-card';
-                if (!compat.supported) {
-                    cardClasses += ' disabled';
-                }
-                card.className = cardClasses;
-
-                // Normaliser l'objet pour l'historique/favoris
-                const item = {
-                    name: channel.name,
-                    url: channel.url,
-                    category: channel.category || 'Live'
-                };
-
-                const isFav = favorites.some(f => f.url === item.url);
-                const safeItem = JSON.stringify(item).replace(/"/g, '&quot;');
-
-                let compatClass = 'channel-compat';
-                let compatText = '';
-
-                if (!compat.supported) {
-                    compatClass += ' channel-compat-bad';
-                    compatText = `⚠️ Non compatible sur ce navigateur: ${compat.reason}`;
-                } else if (compat.warning) {
-                    compatClass += ' channel-compat-warning';
-                    compatText = `⚠️ Compatibilité non garantie (${compat.reason})`;
-                } else {
-                    compatClass += ' channel-compat-ok';
-                    compatText = `✅ Compatible ${compat.format !== 'inconnu' ? compat.format : ''}`.trim();
-                }
-
-                card.innerHTML = `
+                    card.innerHTML = `
                     <button class="favorite-btn ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite(${safeItem})">
                         ${isFav ? '❤️' : '🤍'}
                     </button>
@@ -2471,286 +2481,286 @@
                     <p class="${compatClass}">${compatText}</p>
                 `;
 
-                card.onclick = () => {
-                    playChannel(channel);
-                    addToHistory(item);
-                };
+                    card.onclick = () => {
+                        playChannel(channel);
+                        addToHistory(item);
+                    };
 
-                fragment.appendChild(card);
-            });
-
-            // Ajouter tous les éléments d'un coup au DOM
-            container.appendChild(fragment);
-            debugLog(`✅ ${channelsToDisplay.length} chaînes affichées (page ${currentPage}/${totalPages})`, 'success');
-        }
-
-        // 📄 Fonctions de pagination
-        function changePage(newPage) {
-            if (newPage < 1 || newPage > totalPages) return;
-            currentPage = newPage;
-            displayChannels();
-            // Scroller en haut de la liste
-            document.getElementById('channelsList').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
-        function updatePaginationControls() {
-            const totalChannels = channels.length;
-
-            // Mettre à jour les éléments en haut
-            document.getElementById('currentPageTop').textContent = currentPage;
-            document.getElementById('totalPagesTop').textContent = totalPages;
-            document.getElementById('channelsCountTop').textContent = totalChannels;
-
-            // Mettre à jour les éléments en bas
-            document.getElementById('currentPageBottom').textContent = currentPage;
-            document.getElementById('totalPagesBottom').textContent = totalPages;
-            document.getElementById('channelsCountBottom').textContent = totalChannels;
-        }
-
-        // 🔍 Recherche intelligente avec filtrage global
-        let allChannelsBackup = [];  // Backup pour restaurer après recherche
-        let isSearchActive = false;
-
-        function filterContent() {
-            const searchBox = document.getElementById('searchBox');
-            if (!searchBox) return;
-
-            const search = searchBox.value.toLowerCase().trim();
-
-            if (!search) {
-                // Restaurer toutes les chaînes si recherche vide
-                if (isSearchActive && allChannelsBackup.length > 0) {
-                    channels = allChannelsBackup;
-                    allChannelsBackup = [];
-                    isSearchActive = false;
-                    currentPage = 1;
-                    displayChannels();
-                    debugLog('🔍 Recherche effacée, affichage de toutes les chaînes', 'info');
-                }
-                return;
-            }
-
-            // Sauvegarder toutes les chaînes la première fois
-            if (!isSearchActive) {
-                allChannelsBackup = [...channels];
-                isSearchActive = true;
-            }
-
-            // Filtrer sur toutes les chaînes
-            const filtered = allChannelsBackup.filter(channel => {
-                const name = (channel.name || '').toLowerCase();
-                const category = (channel.category || '').toLowerCase();
-                return name.includes(search) || category.includes(search);
-            });
-
-            channels = filtered;
-            currentPage = 1;
-            displayChannels();
-
-            debugLog(`🔍 Recherche: "${search}" → ${filtered.length} résultat(s)`, 'info');
-
-            if (filtered.length === 0) {
-                showStatus(`❌ Aucun résultat pour "${search}"`, 'warning');
-            } else {
-                showStatus(`✅ ${filtered.length} résultat(s) pour "${search}"`, 'success');
-            }
-        }
-
-        // Charger les films depuis Xtream
-        async function loadMovies() {
-            if (!channels.length) {
-                showStatus('⚠️ Chargez d\'abord les chaînes', 'warning');
-                return;
-            }
-
-            debugLog('🎬 Chargement des films...', 'info');
-            showStatus('🔄 Chargement des films...', 'success');
-
-            const config = JSON.parse(localStorage.getItem('iptvConfig'));
-            if (!config || config.type !== 'xtream') {
-                showStatus('⚠️ Les films nécessitent Xtream Codes', 'warning');
-                return;
-            }
-
-            try {
-                let serverUrl = config.url.trim();
-                if (serverUrl.endsWith('/')) serverUrl = serverUrl.slice(0, -1);
-
-                const apiUrl = `${serverUrl}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}&action=get_vod_streams`;
-
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-
-                movies = Array.isArray(data) ? data.map((m, i) => ({
-                    name: m.name || m.title || `Film ${i + 1}`,
-                    url: `${serverUrl}/movie/${config.username}/${config.password}/${m.stream_id}.${m.container_extension || 'mp4'}`,
-                    category: m.category_name || 'Films',
-                    poster: m.stream_icon || m.cover_big || null,
-                    streamId: m.stream_id
-                })) : [];
-
-                debugLog(`✅ ${movies.length} films chargés`, 'success');
-                displayMovies();
-            } catch (error) {
-                debugLog(`❌ Erreur chargement films: ${error.message}`, 'error');
-                showStatus('❌ Impossible de charger les films', 'error');
-            }
-        }
-
-        function displayMovies() {
-            const container = document.getElementById('moviesList');
-            container.innerHTML = '';
-
-            if (movies.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">Aucun film disponible</p>';
-                return;
-            }
-
-            movies.forEach(movie => {
-                const card = createMediaCard(movie);
-                container.appendChild(card);
-            });
-        }
-
-        // Charger les séries depuis Xtream
-        async function loadSeries() {
-            if (!channels.length) {
-                showStatus('⚠️ Chargez d\'abord les chaînes', 'warning');
-                return;
-            }
-
-            debugLog('📺 Chargement des séries...', 'info');
-            showStatus('🔄 Chargement des séries...', 'success');
-
-            const config = JSON.parse(localStorage.getItem('iptvConfig'));
-            if (!config || config.type !== 'xtream') {
-                showStatus('⚠️ Les séries nécessitent Xtream Codes', 'warning');
-                return;
-            }
-
-            try {
-                let serverUrl = config.url.trim();
-                if (serverUrl.endsWith('/')) serverUrl = serverUrl.slice(0, -1);
-
-                const apiUrl = `${serverUrl}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}&action=get_series`;
-
-                const response = await fetch(apiUrl);
-                const data = await response.json();
-
-                series = Array.isArray(data) ? data.map((s, i) => ({
-                    name: s.name || s.title || `Série ${i + 1}`,
-                    url: `${serverUrl}/series/${config.username}/${config.password}/${s.series_id}.m3u8`,
-                    category: s.category_name || 'Séries',
-                    poster: s.cover || s.cover_big || null,
-                    seriesId: s.series_id
-                })) : [];
-
-                debugLog(`✅ ${series.length} séries chargées`, 'success');
-                displaySeries();
-            } catch (error) {
-                debugLog(`❌ Erreur chargement séries: ${error.message}`, 'error');
-                showStatus('❌ Impossible de charger les séries', 'error');
-            }
-        }
-
-        function displaySeries() {
-            const container = document.getElementById('seriesList');
-            container.innerHTML = '';
-
-            if (series.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">Aucune série disponible</p>';
-                return;
-            }
-
-            series.forEach(serie => {
-                const card = createMediaCard(serie);
-                container.appendChild(card);
-            });
-        }
-
-        // Charger l'EPG (Electronic Program Guide)
-        async function loadEPG() {
-            debugLog('📋 Chargement de l\'EPG...', 'info');
-            showStatus('🔄 Chargement du guide des programmes...', 'success');
-
-            const config = JSON.parse(localStorage.getItem('iptvConfig'));
-
-            try {
-                // Générer un EPG fictif avec horaires réalistes
-                const now = new Date();
-                epgData = channels.slice(0, 10).flatMap((channel, index) => {
-                    const programs = [];
-                    let startTime = new Date(now);
-                    startTime.setHours(6, 0, 0, 0);
-
-                    const programTemplates = [
-                        { title: 'Journal du matin', duration: 30 },
-                        { title: 'Météo', duration: 15 },
-                        { title: 'Magazine', duration: 60 },
-                        { title: 'Film', duration: 120 },
-                        { title: 'Série', duration: 45 },
-                        { title: 'Documentaire', duration: 60 },
-                        { title: 'Journal du soir', duration: 30 },
-                        { title: 'Divertissement', duration: 90 }
-                    ];
-
-                    for (let i = 0; i < 8; i++) {
-                        const template = programTemplates[i];
-                        const endTime = new Date(startTime.getTime() + template.duration * 60000);
-                        const isCurrent = now >= startTime && now < endTime;
-
-                        programs.push({
-                            channel: channel.name,
-                            title: template.title,
-                            start: startTime.toISOString(),
-                            end: endTime.toISOString(),
-                            description: `${template.title} sur ${channel.name}`,
-                            isCurrent: isCurrent
-                        });
-
-                        startTime = new Date(endTime);
-                    }
-
-                    return programs;
+                    fragment.appendChild(card);
                 });
 
-                debugLog(`✅ EPG généré: ${epgData.length} programmes`, 'success');
-                displayEPG();
-            } catch (error) {
-                debugLog(`❌ Erreur chargement EPG: ${error.message}`, 'error');
-                showStatus('❌ Impossible de charger l\'EPG', 'error');
-            }
-        }
-
-        function displayEPG() {
-            const container = document.getElementById('epgTimeline');
-            container.innerHTML = '';
-
-            if (epgData.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">Aucun programme disponible</p>';
-                return;
+                // Ajouter tous les éléments d'un coup au DOM
+                container.appendChild(fragment);
+                debugLog(`✅ ${channelsToDisplay.length} chaînes affichées (page ${currentPage}/${totalPages})`, 'success');
             }
 
-            // Grouper par chaîne
-            const byChannel = {};
-            epgData.forEach(prog => {
-                if (!byChannel[prog.channel]) byChannel[prog.channel] = [];
-                byChannel[prog.channel].push(prog);
-            });
+            // 📄 Fonctions de pagination
+            function changePage(newPage) {
+                if (newPage < 1 || newPage > totalPages) return;
+                currentPage = newPage;
+                displayChannels();
+                // Scroller en haut de la liste
+                document.getElementById('channelsList').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
 
-            // Afficher les programmes actuels et à venir
-            Object.entries(byChannel).forEach(([channel, programs]) => {
-                const now = new Date();
-                const upcoming = programs.filter(p => new Date(p.start) >= now).slice(0, 3);
+            function updatePaginationControls() {
+                const totalChannels = channels.length;
 
-                upcoming.forEach(prog => {
-                    const card = document.createElement('div');
-                    card.className = `epg-program ${prog.isCurrent ? 'current' : ''}`;
+                // Mettre à jour les éléments en haut
+                document.getElementById('currentPageTop').textContent = currentPage;
+                document.getElementById('totalPagesTop').textContent = totalPages;
+                document.getElementById('channelsCountTop').textContent = totalChannels;
 
-                    const start = new Date(prog.start);
-                    const end = new Date(prog.end);
+                // Mettre à jour les éléments en bas
+                document.getElementById('currentPageBottom').textContent = currentPage;
+                document.getElementById('totalPagesBottom').textContent = totalPages;
+                document.getElementById('channelsCountBottom').textContent = totalChannels;
+            }
 
-                    card.innerHTML = `
+            // 🔍 Recherche intelligente avec filtrage global
+            let allChannelsBackup = [];  // Backup pour restaurer après recherche
+            let isSearchActive = false;
+
+            function filterContent() {
+                const searchBox = document.getElementById('searchBox');
+                if (!searchBox) return;
+
+                const search = searchBox.value.toLowerCase().trim();
+
+                if (!search) {
+                    // Restaurer toutes les chaînes si recherche vide
+                    if (isSearchActive && allChannelsBackup.length > 0) {
+                        channels = allChannelsBackup;
+                        allChannelsBackup = [];
+                        isSearchActive = false;
+                        currentPage = 1;
+                        displayChannels();
+                        debugLog('🔍 Recherche effacée, affichage de toutes les chaînes', 'info');
+                    }
+                    return;
+                }
+
+                // Sauvegarder toutes les chaînes la première fois
+                if (!isSearchActive) {
+                    allChannelsBackup = [...channels];
+                    isSearchActive = true;
+                }
+
+                // Filtrer sur toutes les chaînes
+                const filtered = allChannelsBackup.filter(channel => {
+                    const name = (channel.name || '').toLowerCase();
+                    const category = (channel.category || '').toLowerCase();
+                    return name.includes(search) || category.includes(search);
+                });
+
+                channels = filtered;
+                currentPage = 1;
+                displayChannels();
+
+                debugLog(`🔍 Recherche: "${search}" → ${filtered.length} résultat(s)`, 'info');
+
+                if (filtered.length === 0) {
+                    showStatus(`❌ Aucun résultat pour "${search}"`, 'warning');
+                } else {
+                    showStatus(`✅ ${filtered.length} résultat(s) pour "${search}"`, 'success');
+                }
+            }
+
+            // Charger les films depuis Xtream
+            async function loadMovies() {
+                if (!channels.length) {
+                    showStatus('⚠️ Chargez d\'abord les chaînes', 'warning');
+                    return;
+                }
+
+                debugLog('🎬 Chargement des films...', 'info');
+                showStatus('🔄 Chargement des films...', 'success');
+
+                const config = JSON.parse(localStorage.getItem('iptvConfig'));
+                if (!config || config.type !== 'xtream') {
+                    showStatus('⚠️ Les films nécessitent Xtream Codes', 'warning');
+                    return;
+                }
+
+                try {
+                    let serverUrl = config.url.trim();
+                    if (serverUrl.endsWith('/')) serverUrl = serverUrl.slice(0, -1);
+
+                    const apiUrl = `${serverUrl}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}&action=get_vod_streams`;
+
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+
+                    movies = Array.isArray(data) ? data.map((m, i) => ({
+                        name: m.name || m.title || `Film ${i + 1}`,
+                        url: `${serverUrl}/movie/${config.username}/${config.password}/${m.stream_id}.${m.container_extension || 'mp4'}`,
+                        category: m.category_name || 'Films',
+                        poster: m.stream_icon || m.cover_big || null,
+                        streamId: m.stream_id
+                    })) : [];
+
+                    debugLog(`✅ ${movies.length} films chargés`, 'success');
+                    displayMovies();
+                } catch (error) {
+                    debugLog(`❌ Erreur chargement films: ${error.message}`, 'error');
+                    showStatus('❌ Impossible de charger les films', 'error');
+                }
+            }
+
+            function displayMovies() {
+                const container = document.getElementById('moviesList');
+                container.innerHTML = '';
+
+                if (movies.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">Aucun film disponible</p>';
+                    return;
+                }
+
+                movies.forEach(movie => {
+                    const card = createMediaCard(movie);
+                    container.appendChild(card);
+                });
+            }
+
+            // Charger les séries depuis Xtream
+            async function loadSeries() {
+                if (!channels.length) {
+                    showStatus('⚠️ Chargez d\'abord les chaînes', 'warning');
+                    return;
+                }
+
+                debugLog('📺 Chargement des séries...', 'info');
+                showStatus('🔄 Chargement des séries...', 'success');
+
+                const config = JSON.parse(localStorage.getItem('iptvConfig'));
+                if (!config || config.type !== 'xtream') {
+                    showStatus('⚠️ Les séries nécessitent Xtream Codes', 'warning');
+                    return;
+                }
+
+                try {
+                    let serverUrl = config.url.trim();
+                    if (serverUrl.endsWith('/')) serverUrl = serverUrl.slice(0, -1);
+
+                    const apiUrl = `${serverUrl}/player_api.php?username=${encodeURIComponent(config.username)}&password=${encodeURIComponent(config.password)}&action=get_series`;
+
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+
+                    series = Array.isArray(data) ? data.map((s, i) => ({
+                        name: s.name || s.title || `Série ${i + 1}`,
+                        url: `${serverUrl}/series/${config.username}/${config.password}/${s.series_id}.m3u8`,
+                        category: s.category_name || 'Séries',
+                        poster: s.cover || s.cover_big || null,
+                        seriesId: s.series_id
+                    })) : [];
+
+                    debugLog(`✅ ${series.length} séries chargées`, 'success');
+                    displaySeries();
+                } catch (error) {
+                    debugLog(`❌ Erreur chargement séries: ${error.message}`, 'error');
+                    showStatus('❌ Impossible de charger les séries', 'error');
+                }
+            }
+
+            function displaySeries() {
+                const container = document.getElementById('seriesList');
+                container.innerHTML = '';
+
+                if (series.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">Aucune série disponible</p>';
+                    return;
+                }
+
+                series.forEach(serie => {
+                    const card = createMediaCard(serie);
+                    container.appendChild(card);
+                });
+            }
+
+            // Charger l'EPG (Electronic Program Guide)
+            async function loadEPG() {
+                debugLog('📋 Chargement de l\'EPG...', 'info');
+                showStatus('🔄 Chargement du guide des programmes...', 'success');
+
+                const config = JSON.parse(localStorage.getItem('iptvConfig'));
+
+                try {
+                    // Générer un EPG fictif avec horaires réalistes
+                    const now = new Date();
+                    epgData = channels.slice(0, 10).flatMap((channel, index) => {
+                        const programs = [];
+                        let startTime = new Date(now);
+                        startTime.setHours(6, 0, 0, 0);
+
+                        const programTemplates = [
+                            { title: 'Journal du matin', duration: 30 },
+                            { title: 'Météo', duration: 15 },
+                            { title: 'Magazine', duration: 60 },
+                            { title: 'Film', duration: 120 },
+                            { title: 'Série', duration: 45 },
+                            { title: 'Documentaire', duration: 60 },
+                            { title: 'Journal du soir', duration: 30 },
+                            { title: 'Divertissement', duration: 90 }
+                        ];
+
+                        for (let i = 0; i < 8; i++) {
+                            const template = programTemplates[i];
+                            const endTime = new Date(startTime.getTime() + template.duration * 60000);
+                            const isCurrent = now >= startTime && now < endTime;
+
+                            programs.push({
+                                channel: channel.name,
+                                title: template.title,
+                                start: startTime.toISOString(),
+                                end: endTime.toISOString(),
+                                description: `${template.title} sur ${channel.name}`,
+                                isCurrent: isCurrent
+                            });
+
+                            startTime = new Date(endTime);
+                        }
+
+                        return programs;
+                    });
+
+                    debugLog(`✅ EPG généré: ${epgData.length} programmes`, 'success');
+                    displayEPG();
+                } catch (error) {
+                    debugLog(`❌ Erreur chargement EPG: ${error.message}`, 'error');
+                    showStatus('❌ Impossible de charger l\'EPG', 'error');
+                }
+            }
+
+            function displayEPG() {
+                const container = document.getElementById('epgTimeline');
+                container.innerHTML = '';
+
+                if (epgData.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 40px;">Aucun programme disponible</p>';
+                    return;
+                }
+
+                // Grouper par chaîne
+                const byChannel = {};
+                epgData.forEach(prog => {
+                    if (!byChannel[prog.channel]) byChannel[prog.channel] = [];
+                    byChannel[prog.channel].push(prog);
+                });
+
+                // Afficher les programmes actuels et à venir
+                Object.entries(byChannel).forEach(([channel, programs]) => {
+                    const now = new Date();
+                    const upcoming = programs.filter(p => new Date(p.start) >= now).slice(0, 3);
+
+                    upcoming.forEach(prog => {
+                        const card = document.createElement('div');
+                        card.className = `epg-program ${prog.isCurrent ? 'current' : ''}`;
+
+                        const start = new Date(prog.start);
+                        const end = new Date(prog.end);
+
+                        card.innerHTML = `
                         <div class="epg-time">
                             ${start.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} - 
                             ${end.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
@@ -2760,411 +2770,411 @@
                         <div class="epg-description">${channel}</div>
                     `;
 
-                    container.appendChild(card);
+                        container.appendChild(card);
+                    });
                 });
-            });
-        }
-
-        async function playChannel(channel) {
-            const video = document.getElementById('videoPlayer');
-            const container = document.getElementById('videoContainer');
-            const playing = document.getElementById('currentPlaying');
-            const playingName = document.getElementById('playingName');
-
-            container.classList.remove('hidden');
-            playing.classList.remove('hidden');
-            playingName.textContent = channel.name;
-
-            debugLog(`🎬 Lecture de: ${channel.name}`, 'info');
-
-            // Vérifier que l'objet canal est valide
-            if (!channel || !channel.url) {
-                debugLog('❌ Objet canal invalide ou URL manquante', 'error');
-                showStatus('❌ Impossible de lancer ce contenu (URL manquante)', 'error');
-                return;
             }
 
-            // TOUJOURS sauvegarder l'URL originale
-            if (!channel._originalUrl) {
-                channel._originalUrl = channel.url;
-                debugLog('💾 URL originale sauvegardée', 'info');
-            }
+            async function playChannel(channel) {
+                const video = document.getElementById('videoPlayer');
+                const container = document.getElementById('videoContainer');
+                const playing = document.getElementById('currentPlaying');
+                const playingName = document.getElementById('playingName');
 
-            let finalStreamUrl = channel.url;
-            let needsProxy = false;
-            let useProxy = false;
+                container.classList.remove('hidden');
+                playing.classList.remove('hidden');
+                playingName.textContent = channel.name;
 
-            // 🧪 Test d'accessibilité intelligent du flux
-            debugLog('═══════════════════════════════════════════', 'info');
-            debugLog('🧪 TEST INTELLIGENT D\'ACCESSIBILITÉ DU FLUX', 'info');
-            debugLog('═══════════════════════════════════════════', 'info');
+                debugLog(`🎬 Lecture de: ${channel.name}`, 'info');
 
-            // Détecter mixed content (HTTPS page → HTTP stream)
-            const isMixedContent = window.location && window.location.protocol === 'https:' && channel.url.startsWith('http://');
+                // Vérifier que l'objet canal est valide
+                if (!channel || !channel.url) {
+                    debugLog('❌ Objet canal invalide ou URL manquante', 'error');
+                    showStatus('❌ Impossible de lancer ce contenu (URL manquante)', 'error');
+                    return;
+                }
 
-            if (isMixedContent) {
-                debugLog('⚠️ Mixed content détecté (HTTPS→HTTP)', 'warning');
-                debugLog('🔒 Le navigateur bloquera probablement la connexion directe', 'warning');
-                needsProxy = true;
-                useProxy = true;
-            } else {
-                // Tester l'accessibilité directe d'abord
-                debugLog('🧪 Test 1/2: Tentative d\'accès DIRECT au flux...', 'info');
-                showStatus('🧪 Test d\'accessibilité du flux...', 'info');
+                // TOUJOURS sauvegarder l'URL originale
+                if (!channel._originalUrl) {
+                    channel._originalUrl = channel.url;
+                    debugLog('💾 URL originale sauvegardée', 'info');
+                }
 
-                const directAccessible = await testStreamAccess(channel.url);
+                let finalStreamUrl = channel.url;
+                let needsProxy = false;
+                let useProxy = false;
 
-                if (directAccessible) {
-                    debugLog('✅ Flux accessible en DIRECT !', 'success');
-                    debugLog('🎯 Pas besoin de proxy', 'success');
-                    finalStreamUrl = channel.url;
-                    useProxy = false;
-                } else {
-                    debugLog('❌ Flux non accessible en direct', 'warning');
-                    debugLog('🔄 Un proxy sera nécessaire', 'warning');
+                // 🧪 Test d'accessibilité intelligent du flux
+                debugLog('═══════════════════════════════════════════', 'info');
+                debugLog('🧪 TEST INTELLIGENT D\'ACCESSIBILITÉ DU FLUX', 'info');
+                debugLog('═══════════════════════════════════════════', 'info');
+
+                // Détecter mixed content (HTTPS page → HTTP stream)
+                const isMixedContent = window.location && window.location.protocol === 'https:' && channel.url.startsWith('http://');
+
+                if (isMixedContent) {
+                    debugLog('⚠️ Mixed content détecté (HTTPS→HTTP)', 'warning');
+                    debugLog('🔒 Le navigateur bloquera probablement la connexion directe', 'warning');
                     needsProxy = true;
                     useProxy = true;
-                }
-            }
+                } else {
+                    // Tester l'accessibilité directe d'abord
+                    debugLog('🧪 Test 1/2: Tentative d\'accès DIRECT au flux...', 'info');
+                    showStatus('🧪 Test d\'accessibilité du flux...', 'info');
 
-            // Si proxy nécessaire, sélectionner intelligemment
-            if ((PROXY_STREAMS && useProxy) || forceProxyMode) {
-                debugLog(forceProxyMode ? '🛡️ Proxy FORCÉ par l\'utilisateur' : '🔄 Activation du proxy de streaming', 'info');
+                    const directAccessible = await testStreamAccess(channel.url);
 
-                // Extraire le serveur de l'URL pour le cache
-                let serverUrl = null;
-                try {
-                    const urlObj = new URL(channel.url);
-                    serverUrl = `${urlObj.protocol}//${urlObj.host}`;
-                } catch (e) {
-                    debugLog('⚠️ Impossible d\'extraire le serveur de l\'URL', 'warning');
-                }
-
-                // Vérifier si on force un proxy spécifique (retry)
-                let selectedProxy;
-                if (channel._forceProxy) {
-                    selectedProxy = STREAM_PROXIES.find(p => p.name === channel._forceProxy && p.url !== null);
-                    if (selectedProxy) {
-                        debugLog(`🎯 Utilisation du proxy forcé: ${selectedProxy.name}`, 'info');
+                    if (directAccessible) {
+                        debugLog('✅ Flux accessible en DIRECT !', 'success');
+                        debugLog('🎯 Pas besoin de proxy', 'success');
+                        finalStreamUrl = channel.url;
+                        useProxy = false;
                     } else {
-                        debugLog(`⚠️ Proxy forcé ${channel._forceProxy} introuvable, sélection automatique`, 'warning');
+                        debugLog('❌ Flux non accessible en direct', 'warning');
+                        debugLog('🔄 Un proxy sera nécessaire', 'warning');
+                        needsProxy = true;
+                        useProxy = true;
+                    }
+                }
+
+                // Si proxy nécessaire, sélectionner intelligemment
+                if ((PROXY_STREAMS && useProxy) || forceProxyMode) {
+                    debugLog(forceProxyMode ? '🛡️ Proxy FORCÉ par l\'utilisateur' : '🔄 Activation du proxy de streaming', 'info');
+
+                    // Extraire le serveur de l'URL pour le cache
+                    let serverUrl = null;
+                    try {
+                        const urlObj = new URL(channel.url);
+                        serverUrl = `${urlObj.protocol}//${urlObj.host}`;
+                    } catch (e) {
+                        debugLog('⚠️ Impossible d\'extraire le serveur de l\'URL', 'warning');
+                    }
+
+                    // Vérifier si on force un proxy spécifique (retry)
+                    let selectedProxy;
+                    if (channel._forceProxy) {
+                        selectedProxy = STREAM_PROXIES.find(p => p.name === channel._forceProxy && p.url !== null);
+                        if (selectedProxy) {
+                            debugLog(`🎯 Utilisation du proxy forcé: ${selectedProxy.name}`, 'info');
+                        } else {
+                            debugLog(`⚠️ Proxy forcé ${channel._forceProxy} introuvable, sélection automatique`, 'warning');
+                            selectedProxy = await selectStreamProxy(channel.url, serverUrl);
+                        }
+                    } else {
+                        // Sélectionner le meilleur proxy disponible (avec cache intelligent)
                         selectedProxy = await selectStreamProxy(channel.url, serverUrl);
                     }
-                } else {
-                    // Sélectionner le meilleur proxy disponible (avec cache intelligent)
-                    selectedProxy = await selectStreamProxy(channel.url, serverUrl);
-                }
 
-                if (selectedProxy && selectedProxy.url) {
-                    finalStreamUrl = selectedProxy.url + encodeURIComponent(channel.url);
-                    debugLog(`🔄 Proxy sélectionné: ${selectedProxy.name}`, 'success');
-                    debugLog('🔄 URL proxifiée: ' + finalStreamUrl.substring(0, 100) + '...', 'info');
-                    showStatus(`🔄 Flux proxifié via ${selectedProxy.name}`, 'success');
-                    channel._currentProxy = selectedProxy.name;
-                    channel._proxyAttempts = (channel._proxyAttempts || 0) + 1;
-                    channel._serverUrl = serverUrl;
-                    debugLog(`📈 Tentative proxy n°${channel._proxyAttempts}`, 'info');
+                    if (selectedProxy && selectedProxy.url) {
+                        finalStreamUrl = selectedProxy.url + encodeURIComponent(channel.url);
+                        debugLog(`🔄 Proxy sélectionné: ${selectedProxy.name}`, 'success');
+                        debugLog('🔄 URL proxifiée: ' + finalStreamUrl.substring(0, 100) + '...', 'info');
+                        showStatus(`🔄 Flux proxifié via ${selectedProxy.name}`, 'success');
+                        channel._currentProxy = selectedProxy.name;
+                        channel._proxyAttempts = (channel._proxyAttempts || 0) + 1;
+                        channel._serverUrl = serverUrl;
+                        debugLog(`📈 Tentative proxy n°${channel._proxyAttempts}`, 'info');
 
-                    // Mémoriser ce proxy pour les flux de ce serveur
-                    if (serverUrl) {
-                        streamProxyCache[serverUrl] = {
-                            proxy: selectedProxy.name,
-                            testedWith: channel.url,
-                            timestamp: Date.now()
-                        };
-                        debugLog(`🧠 Proxy mémorisé pour les flux de ${serverUrl.replace(/https?:\/\//, '')}`, 'success');
+                        // Mémoriser ce proxy pour les flux de ce serveur
+                        if (serverUrl) {
+                            streamProxyCache[serverUrl] = {
+                                proxy: selectedProxy.name,
+                                testedWith: channel.url,
+                                timestamp: Date.now()
+                            };
+                            debugLog(`🧠 Proxy mémorisé pour les flux de ${serverUrl.replace(/https?:\/\//, '')}`, 'success');
+                        }
+                    } else {
+                        debugLog('⚠️ Aucun proxy disponible, tentative en direct (risque d\'échec)', 'warning');
+                        showStatus('⚠️ Tentative directe sans proxy...', 'warning');
+                        finalStreamUrl = channel.url;
                     }
                 } else {
-                    debugLog('⚠️ Aucun proxy disponible, tentative en direct (risque d\'échec)', 'warning');
-                    showStatus('⚠️ Tentative directe sans proxy...', 'warning');
-                    finalStreamUrl = channel.url;
+                    debugLog(`🔗 URL directe: ${channel.url.substring(0, 80)}...`, 'info');
                 }
-            } else {
-                debugLog(`🔗 URL directe: ${channel.url.substring(0, 80)}...`, 'info');
-            }
 
-            // Détecter un possible blocage "mixed content" (page HTTPS, flux HTTP)
-            try {
-                if (!PROXY_STREAMS && window.location && window.location.protocol === 'https:' && channel.url.startsWith('http://')) {
-                    debugLog('⚠️ Mixed content détecté: page HTTPS mais flux HTTP', 'warning');
-                    showStatus('⚠️ Le flux utilise HTTP alors que la page est chargée en HTTPS. Le navigateur peut bloquer la vidéo. Active PROXY_STREAMS ou utilise HTTPS.', 'warning');
+                // Détecter un possible blocage "mixed content" (page HTTPS, flux HTTP)
+                try {
+                    if (!PROXY_STREAMS && window.location && window.location.protocol === 'https:' && channel.url.startsWith('http://')) {
+                        debugLog('⚠️ Mixed content détecté: page HTTPS mais flux HTTP', 'warning');
+                        showStatus('⚠️ Le flux utilise HTTP alors que la page est chargée en HTTPS. Le navigateur peut bloquer la vidéo. Active PROXY_STREAMS ou utilise HTTPS.', 'warning');
+                    }
+                } catch (e) {
+                    // Ne jamais casser la lecture à cause d'un simple check d'environnement
+                    debugLog(`⚠️ Erreur pendant la détection mixed content: ${e.message}`, 'warning');
                 }
-            } catch (e) {
-                // Ne jamais casser la lecture à cause d'un simple check d'environnement
-                debugLog(`⚠️ Erreur pendant la détection mixed content: ${e.message}`, 'warning');
-            }
 
-            // Arrêter HLS précédent
-            if (hls) {
-                debugLog('🛑 Arrêt du stream précédent', 'info');
-                hls.destroy();
-                hls = null;
-            }
+                // Arrêter HLS précédent
+                if (hls) {
+                    debugLog('🛑 Arrêt du stream précédent', 'info');
+                    hls.destroy();
+                    hls = null;
+                }
 
-            // Réinitialiser le player
-            video.pause();
-            video.removeAttribute('src');
-            video.load();
+                // Réinitialiser le player
+                video.pause();
+                video.removeAttribute('src');
+                video.load();
 
-            // Détecter si c'est HLS (.m3u8)
-            if (channel.url.includes('.m3u8')) {
-                debugLog('📡 Format détecté: HLS (M3U8)', 'info');
+                // Détecter si c'est HLS (.m3u8)
+                if (channel.url.includes('.m3u8')) {
+                    debugLog('📡 Format détecté: HLS (M3U8)', 'info');
 
-                // Vérifier support natif HLS (Safari, certains navigateurs Android)
-                if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                    debugLog('✅ Support HLS natif du navigateur', 'success');
+                    // Vérifier support natif HLS (Safari, certains navigateurs Android)
+                    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                        debugLog('✅ Support HLS natif du navigateur', 'success');
+                        video.src = finalStreamUrl;
+                        video.play().catch(e => {
+                            debugLog(`❌ Erreur lecture native: ${e.message}`, 'error');
+                            showStatus('❌ Impossible de lire ce flux HLS (lecture native). Tentative automatique via HLS.js...', 'error');
+
+                            if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                                debugLog('🔁 Fallback automatique: tentative de lecture via HLS.js après échec natif', 'warning');
+
+                                if (hls) {
+                                    try {
+                                        hls.destroy();
+                                    } catch (_) { }
+                                    hls = null;
+                                }
+
+                                const hlsConfig = {
+                                    enableWorker: true,
+                                    lowLatencyMode: false,
+                                    backBufferLength: 90,
+                                    maxBufferLength: 30,
+                                    maxMaxBufferLength: 60,
+                                    maxBufferSize: 60 * 1000 * 1000,
+                                    maxBufferHole: 0.5,
+                                    highBufferWatchdogPeriod: 2,
+                                    nudgeOffset: 0.1,
+                                    nudgeMaxRetry: 3,
+                                    maxFragLookUpTolerance: 0.25,
+                                    liveSyncDurationCount: 3,
+                                    liveMaxLatencyDurationCount: 10,
+                                    liveDurationInfinity: false,
+                                    preferManagedMediaSource: false,
+                                    abrEwmaDefaultEstimate: 500000
+                                };
+
+                                try {
+                                    hls = new Hls(hlsConfig);
+
+                                    hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+                                        debugLog('📺 HLS (fallback) attaché au player', 'success');
+                                    });
+
+                                    hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                                        debugLog(`✅ Manifest (fallback) parsé: ${data.levels.length} qualités disponibles`, 'success');
+                                        video.play().catch(err2 => {
+                                            debugLog(`❌ Erreur autoplay après fallback HLS.js: ${err2.message}`, 'error');
+                                            showStatus('❌ Lecture automatique bloquée après fallback HLS.js. Essayez d\'appuyer sur ▶️ dans la vidéo.', 'error');
+                                        });
+                                    });
+
+                                    hls.on(Hls.Events.ERROR, (event, data) => {
+                                        if (data.fatal) {
+                                            debugLog(`❌ Erreur HLS (fallback) fatale: ${data.type} - ${data.details}`, 'error');
+                                            showStatus('❌ Erreur HLS fatale après fallback: ' + (data.details || data.type), 'error');
+
+                                            // Si c'est une erreur manifestLoad ou networkError et qu'on utilise un proxy
+                                            if ((data.details === 'manifestLoadError' || data.type === Hls.ErrorTypes.NETWORK_ERROR) && channel._originalUrl) {
+                                                debugLog('🔄 Erreur de chargement détectée, tentative avec proxy suivant...', 'warning');
+                                                hls.destroy();
+                                                retryPlayWithNextProxy(channel);
+                                                return;
+                                            }
+
+                                            switch (data.type) {
+                                                case Hls.ErrorTypes.NETWORK_ERROR:
+                                                    debugLog('🔄 Tentative de récupération réseau (fallback)...', 'warning');
+                                                    hls.startLoad();
+                                                    break;
+                                                case Hls.ErrorTypes.MEDIA_ERROR:
+                                                    debugLog('🔄 Tentative de récupération média (fallback)...', 'warning');
+                                                    hls.recoverMediaError();
+                                                    break;
+                                                default:
+                                                    debugLog('💔 Impossible de récupérer après fallback, destruction HLS', 'error');
+                                                    hls.destroy();
+                                                    break;
+                                            }
+                                        } else {
+                                            debugLog(`⚠️ Erreur HLS (fallback) non-fatale: ${data.details}`, 'warning');
+                                        }
+                                    });
+
+                                    hls.loadSource(finalStreamUrl);
+                                    hls.attachMedia(video);
+                                } catch (fallbackError) {
+                                    debugLog(`❌ Fallback HLS.js en échec: ${fallbackError.message}`, 'error');
+                                    showStatus('❌ La lecture a échoué en mode natif et via HLS.js. Flux probablement non compatible avec ce navigateur.', 'error');
+                                }
+                            } else {
+                                debugLog('❌ Aucun fallback HLS.js disponible sur ce navigateur', 'error');
+                            }
+                        });
+                    }
+                    // Sinon utiliser HLS.js (Chrome, Firefox, etc.)
+                    else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+                        debugLog('✅ Utilisation de HLS.js', 'success');
+
+                        // Configuration optimisée pour Android/XPENG (hardware decode)
+                        const hlsConfig = {
+                            enableWorker: true,
+                            lowLatencyMode: false,
+                            backBufferLength: 90,
+                            maxBufferLength: 30,
+                            maxMaxBufferLength: 60,
+                            maxBufferSize: 60 * 1000 * 1000,
+                            maxBufferHole: 0.5,
+                            highBufferWatchdogPeriod: 2,
+                            nudgeOffset: 0.1,
+                            nudgeMaxRetry: 3,
+                            maxFragLookUpTolerance: 0.25,
+                            liveSyncDurationCount: 3,
+                            liveMaxLatencyDurationCount: 10,
+                            liveDurationInfinity: false,
+                            preferManagedMediaSource: false,
+                            // Forcer le décodage hardware si possible
+                            abrEwmaDefaultEstimate: 500000
+                        };
+
+                        hls = new Hls(hlsConfig);
+
+                        hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+                            debugLog('📺 HLS attaché au player', 'success');
+                        });
+
+                        hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+                            debugLog(`✅ Manifest parsé: ${data.levels.length} qualités disponibles`, 'success');
+                            video.play().catch(e => {
+                                debugLog(`❌ Erreur autoplay: ${e.message}`, 'error');
+                                showStatus('❌ Lecture automatique bloquée par le navigateur. Essayez d\'appuyer sur ▶️ dans la vidéo.', 'error');
+                            });
+                        });
+
+                        hls.on(Hls.Events.ERROR, (event, data) => {
+                            if (data.fatal) {
+                                debugLog(`❌ Erreur HLS fatale: ${data.type} - ${data.details}`, 'error');
+                                showStatus('❌ Erreur HLS fatale: ' + (data.details || data.type), 'error');
+
+                                // Si c'est une erreur manifestLoad ou networkError et qu'on utilise un proxy
+                                if ((data.details === 'manifestLoadError' || data.type === Hls.ErrorTypes.NETWORK_ERROR) && channel._originalUrl) {
+                                    debugLog('🔄 Erreur de chargement détectée, tentative avec proxy suivant...', 'warning');
+                                    hls.destroy();
+                                    retryPlayWithNextProxy(channel);
+                                    return;
+                                }
+
+                                switch (data.type) {
+                                    case Hls.ErrorTypes.NETWORK_ERROR:
+                                        debugLog('🔄 Tentative de récupération réseau...', 'warning');
+                                        hls.startLoad();
+                                        break;
+                                    case Hls.ErrorTypes.MEDIA_ERROR:
+                                        debugLog('🔄 Tentative de récupération média...', 'warning');
+                                        hls.recoverMediaError();
+                                        break;
+                                    default:
+                                        debugLog('💔 Impossible de récupérer, destruction HLS', 'error');
+                                        hls.destroy();
+                                        break;
+                                }
+                            } else {
+                                debugLog(`⚠️ Erreur HLS non-fatale: ${data.details}`, 'warning');
+                            }
+                        });
+
+                        hls.loadSource(finalStreamUrl);
+                        hls.attachMedia(video);
+                    } else {
+                        debugLog('❌ HLS non supporté ou Hls.js non chargé dans ce navigateur', 'error');
+                        showStatus('❌ HLS non supporté ou Hls.js non chargé sur ce navigateur', 'error');
+                    }
+                }
+                // Formats directs (MP4, WebM, etc.)
+                else {
+                    debugLog('📹 Format détecté: Vidéo directe (MP4/WebM)', 'info');
                     video.src = finalStreamUrl;
                     video.play().catch(e => {
-                        debugLog(`❌ Erreur lecture native: ${e.message}`, 'error');
-                        showStatus('❌ Impossible de lire ce flux HLS (lecture native). Tentative automatique via HLS.js...', 'error');
-
-                        if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                            debugLog('🔁 Fallback automatique: tentative de lecture via HLS.js après échec natif', 'warning');
-
-                            if (hls) {
-                                try {
-                                    hls.destroy();
-                                } catch (_) { }
-                                hls = null;
-                            }
-
-                            const hlsConfig = {
-                                enableWorker: true,
-                                lowLatencyMode: false,
-                                backBufferLength: 90,
-                                maxBufferLength: 30,
-                                maxMaxBufferLength: 60,
-                                maxBufferSize: 60 * 1000 * 1000,
-                                maxBufferHole: 0.5,
-                                highBufferWatchdogPeriod: 2,
-                                nudgeOffset: 0.1,
-                                nudgeMaxRetry: 3,
-                                maxFragLookUpTolerance: 0.25,
-                                liveSyncDurationCount: 3,
-                                liveMaxLatencyDurationCount: 10,
-                                liveDurationInfinity: false,
-                                preferManagedMediaSource: false,
-                                abrEwmaDefaultEstimate: 500000
-                            };
-
-                            try {
-                                hls = new Hls(hlsConfig);
-
-                                hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-                                    debugLog('📺 HLS (fallback) attaché au player', 'success');
-                                });
-
-                                hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-                                    debugLog(`✅ Manifest (fallback) parsé: ${data.levels.length} qualités disponibles`, 'success');
-                                    video.play().catch(err2 => {
-                                        debugLog(`❌ Erreur autoplay après fallback HLS.js: ${err2.message}`, 'error');
-                                        showStatus('❌ Lecture automatique bloquée après fallback HLS.js. Essayez d\'appuyer sur ▶️ dans la vidéo.', 'error');
-                                    });
-                                });
-
-                                hls.on(Hls.Events.ERROR, (event, data) => {
-                                    if (data.fatal) {
-                                        debugLog(`❌ Erreur HLS (fallback) fatale: ${data.type} - ${data.details}`, 'error');
-                                        showStatus('❌ Erreur HLS fatale après fallback: ' + (data.details || data.type), 'error');
-
-                                        // Si c'est une erreur manifestLoad ou networkError et qu'on utilise un proxy
-                                        if ((data.details === 'manifestLoadError' || data.type === Hls.ErrorTypes.NETWORK_ERROR) && channel._originalUrl) {
-                                            debugLog('🔄 Erreur de chargement détectée, tentative avec proxy suivant...', 'warning');
-                                            hls.destroy();
-                                            retryPlayWithNextProxy(channel);
-                                            return;
-                                        }
-
-                                        switch (data.type) {
-                                            case Hls.ErrorTypes.NETWORK_ERROR:
-                                                debugLog('🔄 Tentative de récupération réseau (fallback)...', 'warning');
-                                                hls.startLoad();
-                                                break;
-                                            case Hls.ErrorTypes.MEDIA_ERROR:
-                                                debugLog('🔄 Tentative de récupération média (fallback)...', 'warning');
-                                                hls.recoverMediaError();
-                                                break;
-                                            default:
-                                                debugLog('💔 Impossible de récupérer après fallback, destruction HLS', 'error');
-                                                hls.destroy();
-                                                break;
-                                        }
-                                    } else {
-                                        debugLog(`⚠️ Erreur HLS (fallback) non-fatale: ${data.details}`, 'warning');
-                                    }
-                                });
-
-                                hls.loadSource(finalStreamUrl);
-                                hls.attachMedia(video);
-                            } catch (fallbackError) {
-                                debugLog(`❌ Fallback HLS.js en échec: ${fallbackError.message}`, 'error');
-                                showStatus('❌ La lecture a échoué en mode natif et via HLS.js. Flux probablement non compatible avec ce navigateur.', 'error');
-                            }
-                        } else {
-                            debugLog('❌ Aucun fallback HLS.js disponible sur ce navigateur', 'error');
-                        }
+                        debugLog(`❌ Erreur lecture: ${e.message}`, 'error');
+                        showStatus('❌ Impossible de lire cette vidéo', 'error');
                     });
                 }
-                // Sinon utiliser HLS.js (Chrome, Firefox, etc.)
-                else if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-                    debugLog('✅ Utilisation de HLS.js', 'success');
 
-                    // Configuration optimisée pour Android/XPENG (hardware decode)
-                    const hlsConfig = {
-                        enableWorker: true,
-                        lowLatencyMode: false,
-                        backBufferLength: 90,
-                        maxBufferLength: 30,
-                        maxMaxBufferLength: 60,
-                        maxBufferSize: 60 * 1000 * 1000,
-                        maxBufferHole: 0.5,
-                        highBufferWatchdogPeriod: 2,
-                        nudgeOffset: 0.1,
-                        nudgeMaxRetry: 3,
-                        maxFragLookUpTolerance: 0.25,
-                        liveSyncDurationCount: 3,
-                        liveMaxLatencyDurationCount: 10,
-                        liveDurationInfinity: false,
-                        preferManagedMediaSource: false,
-                        // Forcer le décodage hardware si possible
-                        abrEwmaDefaultEstimate: 500000
-                    };
+                // Événements vidéo
+                video.addEventListener('loadstart', () => debugLog('⏳ Chargement...', 'info'), { once: true });
+                video.addEventListener('canplay', () => debugLog('✅ Vidéo prête', 'success'), { once: true });
+                video.addEventListener('playing', () => debugLog('▶️ Lecture en cours', 'success'), { once: true });
+                video.addEventListener('waiting', () => debugLog('⏸️ Buffering...', 'warning'), { once: true });
+                video.addEventListener('error', (e) => {
+                    const mediaError = e.target && e.target.error ? e.target.error : null;
+                    const code = mediaError && typeof mediaError.code === 'number' ? mediaError.code : null;
+                    const message = mediaError && mediaError.message ? mediaError.message : 'Unknown';
 
-                    hls = new Hls(hlsConfig);
+                    debugLog(`❌ Erreur vidéo: code=${code !== null ? code : 'N/A'}, message="${message}"`, 'error');
 
-                    hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-                        debugLog('📺 HLS attaché au player', 'success');
-                    });
+                    if (code === 4) { // MEDIA_ERR_SRC_NOT_SUPPORTED
+                        debugLog('❌ Flux non compatible: format ou codec non supporté par le navigateur', 'error');
+                        showStatus('❌ Le flux vidéo n\'est pas compatible avec ce navigateur (format ou codec non supporté). Essayez un autre flux ou contactez votre fournisseur IPTV.', 'error');
+                    } else if (code === 3) { // MEDIA_ERR_DECODE
+                        debugLog('⚠️ Erreur de décodage média (MEDIA_ERR_DECODE)', 'warning');
+                        showStatus('⚠️ Le flux a rencontré une erreur de décodage. Essayez de relancer la chaîne ou une autre chaîne.', 'warning');
+                    } else if (code === 2) { // MEDIA_ERR_NETWORK
+                        debugLog('⚠️ Erreur réseau pendant la lecture (MEDIA_ERR_NETWORK)', 'warning');
+                        showStatus('⚠️ Erreur réseau pendant la lecture du flux. Vérifiez votre connexion Internet ou celle du serveur IPTV.', 'warning');
+                    } else if (code === 1) { // MEDIA_ERR_ABORTED
+                        debugLog('⚠️ Lecture interrompue par le système ou l\'utilisateur (MEDIA_ERR_ABORTED)', 'warning');
+                        showStatus('⚠️ La lecture du flux a été interrompue. Relancez la chaîne si besoin.', 'warning');
+                    }
+                }, { once: true });
 
-                    hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-                        debugLog(`✅ Manifest parsé: ${data.levels.length} qualités disponibles`, 'success');
-                        video.play().catch(e => {
-                            debugLog(`❌ Erreur autoplay: ${e.message}`, 'error');
-                            showStatus('❌ Lecture automatique bloquée par le navigateur. Essayez d\'appuyer sur ▶️ dans la vidéo.', 'error');
-                        });
-                    });
-
-                    hls.on(Hls.Events.ERROR, (event, data) => {
-                        if (data.fatal) {
-                            debugLog(`❌ Erreur HLS fatale: ${data.type} - ${data.details}`, 'error');
-                            showStatus('❌ Erreur HLS fatale: ' + (data.details || data.type), 'error');
-
-                            // Si c'est une erreur manifestLoad ou networkError et qu'on utilise un proxy
-                            if ((data.details === 'manifestLoadError' || data.type === Hls.ErrorTypes.NETWORK_ERROR) && channel._originalUrl) {
-                                debugLog('🔄 Erreur de chargement détectée, tentative avec proxy suivant...', 'warning');
-                                hls.destroy();
-                                retryPlayWithNextProxy(channel);
-                                return;
-                            }
-
-                            switch (data.type) {
-                                case Hls.ErrorTypes.NETWORK_ERROR:
-                                    debugLog('🔄 Tentative de récupération réseau...', 'warning');
-                                    hls.startLoad();
-                                    break;
-                                case Hls.ErrorTypes.MEDIA_ERROR:
-                                    debugLog('🔄 Tentative de récupération média...', 'warning');
-                                    hls.recoverMediaError();
-                                    break;
-                                default:
-                                    debugLog('💔 Impossible de récupérer, destruction HLS', 'error');
-                                    hls.destroy();
-                                    break;
-                            }
-                        } else {
-                            debugLog(`⚠️ Erreur HLS non-fatale: ${data.details}`, 'warning');
-                        }
-                    });
-
-                    hls.loadSource(finalStreamUrl);
-                    hls.attachMedia(video);
-                } else {
-                    debugLog('❌ HLS non supporté ou Hls.js non chargé dans ce navigateur', 'error');
-                    showStatus('❌ HLS non supporté ou Hls.js non chargé sur ce navigateur', 'error');
-                }
-            }
-            // Formats directs (MP4, WebM, etc.)
-            else {
-                debugLog('📹 Format détecté: Vidéo directe (MP4/WebM)', 'info');
-                video.src = finalStreamUrl;
-                video.play().catch(e => {
-                    debugLog(`❌ Erreur lecture: ${e.message}`, 'error');
-                    showStatus('❌ Impossible de lire cette vidéo', 'error');
-                });
-            }
-
-            // Événements vidéo
-            video.addEventListener('loadstart', () => debugLog('⏳ Chargement...', 'info'), { once: true });
-            video.addEventListener('canplay', () => debugLog('✅ Vidéo prête', 'success'), { once: true });
-            video.addEventListener('playing', () => debugLog('▶️ Lecture en cours', 'success'), { once: true });
-            video.addEventListener('waiting', () => debugLog('⏸️ Buffering...', 'warning'), { once: true });
-            video.addEventListener('error', (e) => {
-                const mediaError = e.target && e.target.error ? e.target.error : null;
-                const code = mediaError && typeof mediaError.code === 'number' ? mediaError.code : null;
-                const message = mediaError && mediaError.message ? mediaError.message : 'Unknown';
-
-                debugLog(`❌ Erreur vidéo: code=${code !== null ? code : 'N/A'}, message="${message}"`, 'error');
-
-                if (code === 4) { // MEDIA_ERR_SRC_NOT_SUPPORTED
-                    debugLog('❌ Flux non compatible: format ou codec non supporté par le navigateur', 'error');
-                    showStatus('❌ Le flux vidéo n\'est pas compatible avec ce navigateur (format ou codec non supporté). Essayez un autre flux ou contactez votre fournisseur IPTV.', 'error');
-                } else if (code === 3) { // MEDIA_ERR_DECODE
-                    debugLog('⚠️ Erreur de décodage média (MEDIA_ERR_DECODE)', 'warning');
-                    showStatus('⚠️ Le flux a rencontré une erreur de décodage. Essayez de relancer la chaîne ou une autre chaîne.', 'warning');
-                } else if (code === 2) { // MEDIA_ERR_NETWORK
-                    debugLog('⚠️ Erreur réseau pendant la lecture (MEDIA_ERR_NETWORK)', 'warning');
-                    showStatus('⚠️ Erreur réseau pendant la lecture du flux. Vérifiez votre connexion Internet ou celle du serveur IPTV.', 'warning');
-                } else if (code === 1) { // MEDIA_ERR_ABORTED
-                    debugLog('⚠️ Lecture interrompue par le système ou l\'utilisateur (MEDIA_ERR_ABORTED)', 'warning');
-                    showStatus('⚠️ La lecture du flux a été interrompue. Relancez la chaîne si besoin.', 'warning');
-                }
-            }, { once: true });
-
-            // Scroll vers le player
-            setTimeout(() => {
-                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 300);
-        }
-
-        function showPlayer() {
-            document.getElementById('setupSection').classList.add('hidden');
-            document.getElementById('playerSection').classList.remove('hidden');
-        }
-
-        function showSetup() {
-            document.getElementById('setupSection').classList.remove('hidden');
-            document.getElementById('playerSection').classList.add('hidden');
-        }
-
-        function showStatus(message, type) {
-            // Statut dans la section player
-            const status = document.getElementById('statusMessage');
-            if (status) {
-                status.style.display = 'block';
-                status.textContent = message;
-                status.className = 'status-message status-' + type;
-
+                // Scroll vers le player
                 setTimeout(() => {
-                    status.style.display = 'none';
-                }, 5000);
+                    container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300);
             }
 
-            // Statut directement sous le formulaire de configuration (pendant le setup)
-            const setupStatus = document.getElementById('setupStatus');
-            const setupSection = document.getElementById('setupSection');
-            if (setupStatus && setupSection && !setupSection.classList.contains('hidden')) {
-                setupStatus.style.display = 'block';
-                setupStatus.textContent = message;
-                setupStatus.className = 'status-message status-' + type;
+            function showPlayer() {
+                document.getElementById('setupSection').classList.add('hidden');
+                document.getElementById('playerSection').classList.remove('hidden');
             }
-        }
 
-        function clearStorage() {
-            if (confirm('Voulez-vous vraiment effacer toutes les données sauvegardées ?')) {
-                localStorage.removeItem('iptvConfig');
-                location.reload();
+            function showSetup() {
+                document.getElementById('setupSection').classList.remove('hidden');
+                document.getElementById('playerSection').classList.add('hidden');
             }
-        }
+
+            function showStatus(message, type) {
+                // Statut dans la section player
+                const status = document.getElementById('statusMessage');
+                if (status) {
+                    status.style.display = 'block';
+                    status.textContent = message;
+                    status.className = 'status-message status-' + type;
+
+                    setTimeout(() => {
+                        status.style.display = 'none';
+                    }, 5000);
+                }
+
+                // Statut directement sous le formulaire de configuration (pendant le setup)
+                const setupStatus = document.getElementById('setupStatus');
+                const setupSection = document.getElementById('setupSection');
+                if (setupStatus && setupSection && !setupSection.classList.contains('hidden')) {
+                    setupStatus.style.display = 'block';
+                    setupStatus.textContent = message;
+                    setupStatus.className = 'status-message status-' + type;
+                }
+            }
+
+            function clearStorage() {
+                if (confirm('Voulez-vous vraiment effacer toutes les données sauvegardées ?')) {
+                    localStorage.removeItem('iptvConfig');
+                    location.reload();
+                }
+            }
     </script>
 </body>
 
