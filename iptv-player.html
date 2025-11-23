@@ -905,12 +905,11 @@
             { name: 'Cloudflare Worker', url: null, priority: 1 },     // Sera rempli automatiquement
             { name: 'Vercel Edge', url: null, priority: 2 },           // Sera rempli automatiquement
             { name: 'Netlify Functions', url: null, priority: 3 },     // Sera rempli automatiquement
-            { name: 'corsproxy.io', url: 'https://corsproxy.io/?', priority: 5 },                       // ✅ TESTÉ: 48903 chaînes API
-            { name: 'api.codetabs.com', url: 'https://api.codetabs.com/v1/proxy?quest=', priority: 6 }, // ✅ TESTÉ: 48903 chaînes API
+            { name: 'corsproxy.io', url: 'https://corsproxy.io/?', priority: 4 },                       // ✅ TESTÉ: le plus fiable
+            { name: 'Thingproxy', url: 'https://thingproxy.freeboard.io/fetch/', priority: 5 },        // ✅ TESTÉ: très stable
+            { name: 'api.codetabs.com', url: 'https://api.codetabs.com/v1/proxy?quest=', priority: 6 }, // ✅ TESTÉ
             { name: 'cors.eu.org', url: 'https://cors.eu.org/', priority: 7 },                          // Backup
-            { name: 'AllOrigins', url: 'https://api.allorigins.win/raw?url=', priority: 8 },            // Backup
-            { name: 'HLS Proxy', url: 'https://www.hls-proxy.com/api/proxy?url=', priority: 9 },        // Backup
-            { name: 'Thingproxy', url: 'https://thingproxy.freeboard.io/fetch/', priority: 10 },        // Backup
+            { name: 'HLS Proxy', url: 'https://www.hls-proxy.com/api/proxy?url=', priority: 8 },        // Backup
             { name: 'Direct (HTTP)', url: null, priority: 99 }                                          // Tentative directe en dernier recours
         ];
 
