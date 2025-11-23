@@ -719,11 +719,31 @@
             </div>
 
 
-            <button type="button" onclick="saveAndConnect()"
-                style="background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; padding: 14px 28px; font-size: 16px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer;">
-                💾 Sauvegarder et Charger
-            </button>
-            <button type="button" class="btn-secondary" onclick="clearStorage()">🗑️ Effacer les données</button>
+            <div style="display: flex; gap: 12px; margin-top: 20px;">
+                <button id="btnSaveAndConnect" type="button"
+                    style="background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; padding: 14px 28px; font-size: 16px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; flex: 1;">
+                    💾 Sauvegarder et Charger
+                </button>
+                <button type="button" class="btn-secondary" onclick="clearStorage()">🗑️ Effacer les données</button>
+            </div>
+
+            <script>
+                // Forcer l'événement click sur le bouton
+                document.addEventListener('DOMContentLoaded', function () {
+                    const btn = document.getElementById('btnSaveAndConnect');
+                    if (btn) {
+                        btn.addEventListener('click', function (e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('🔵 BOUTON CLIQUÉ - Lancement saveAndConnect()');
+                            saveAndConnect();
+                        });
+                        console.log('✅ Bouton Sauvegarder configuré');
+                    } else {
+                        console.error('❌ Bouton Sauvegarder introuvable');
+                    }
+                });
+            </script>
 
             <!-- Statut visible pendant la configuration -->
             <div id="setupStatus" class="status-message status-info" style="display:none; margin-top:16px;"></div>
