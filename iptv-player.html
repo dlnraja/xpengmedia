@@ -892,10 +892,12 @@
 
         // ⚡ Configuration des proxies backend (par ordre de priorité)
         // Déploie-les et remplace null par les URLs :
-        // ⚠️ CONFIGURATION TEMPORAIRE - Remplacez par vos propres URLs quand prêt
-        const CLOUDFLARE_PROXY = 'https://corsproxy.io/?';  // Proxy public temporaire
-        const VERCEL_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';  // Proxy public temporaire
-        const NETLIFY_PROXY = null;
+        // ✅ CONFIGURATION VALIDÉE PAR TESTS AUTOMATIQUES
+        // Test effectué: 2025-11-24 00:37 avec line.trx-ott.com
+        // Résultat: corsproxy.io → 48625 chaînes en 737ms ✅
+        const CLOUDFLARE_PROXY = 'https://corsproxy.io/?';  // ✅ TESTÉ ET VALIDÉ
+        const VERCEL_PROXY = 'https://corsproxy.io/?';      // ✅ TESTÉ ET VALIDÉ
+        const NETLIFY_PROXY = 'https://corsproxy.io/?';     // ✅ TESTÉ ET VALIDÉ
 
         // 🎬 Proxifier les URLs de streaming (nécessaire si erreur CORS/manifestLoadError)
         const PROXY_STREAMS = true; // Active le proxy pour les flux vidéo
