@@ -892,9 +892,10 @@
 
         // ⚡ Configuration des proxies backend (par ordre de priorité)
         // Déploie-les et remplace null par les URLs :
-        const CLOUDFLARE_PROXY = null;  // Ex: 'https://xpengmedia-iptv-proxy.VOTRE-ID.workers.dev'
-        const VERCEL_PROXY = null;      // Ex: 'https://xpengmedia.vercel.app/api/proxy'
-        const NETLIFY_PROXY = null;     // Ex: 'https://xpengmedia.netlify.app/.netlify/functions/proxy'
+        // ⚠️ CONFIGURATION TEMPORAIRE - Remplacez par vos propres URLs quand prêt
+        const CLOUDFLARE_PROXY = 'https://corsproxy.io/?';  // Proxy public temporaire
+        const VERCEL_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';  // Proxy public temporaire
+        const NETLIFY_PROXY = null;
 
         // 🎬 Proxifier les URLs de streaming (nécessaire si erreur CORS/manifestLoadError)
         const PROXY_STREAMS = true; // Active le proxy pour les flux vidéo
