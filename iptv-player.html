@@ -656,11 +656,11 @@
                 <label for="connectionType">Type de connexion :</label>
                 <select id="connectionType" onchange="updateFormFields()">
                     <option value="m3u">URL M3U/M3U8</option>
-                    <option value="xtream">Xtream Codes API</option>
+                    <option value="xtream" selected>Xtream Codes API ⭐</option>
                 </select>
             </div>
 
-            <div id="m3uFields">
+            <div id="m3uFields" class="hidden">
                 <div class="form-group">
                     <label for="m3uUrl">URL de la playlist M3U :</label>
                     <input type="url" id="m3uUrl" placeholder="https://example.com/playlist.m3u8">
@@ -700,7 +700,7 @@
                 </div>
             </div>
 
-            <div id="xtreamFields" class="hidden">
+            <div id="xtreamFields">
                 <div class="form-group">
                     <label for="xtreamUrl">URL du serveur :</label>
                     <input type="url" id="xtreamUrl" placeholder="http://server.com:port">
