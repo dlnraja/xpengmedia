@@ -1039,7 +1039,20 @@
             // pour qu'elle soit dans le scope global dès le début
         };
 
-        console.log('✅ window.saveAndConnect déclarée (placeholder)');
+        // Fonction showStatus - placeholder
+        window.showStatus = function (message, type) {
+            console.log(`[showStatus ${type}] ${message}`);
+        };
+
+        // Fonction debugLog - placeholder
+        window.debugLog = function (message, type, details) {
+            const timestamp = new Date().toLocaleTimeString('fr-FR');
+            const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️';
+            console.log(`${icon} [${timestamp}] ${message}`);
+            if (details) console.log(details);
+        };
+
+        console.log('✅ Fonctions globales déclarées (placeholders)');
 
         // Charger la configuration sauvegardée au démarrage
         window.onload = function () {
