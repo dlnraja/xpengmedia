@@ -2343,7 +2343,7 @@
                         { name: 'corsproxy.io', url: 'https://corsproxy.io/?' },              // ✅ TESTÉ: 48903 chaînes
                         { name: 'api.codetabs.com', url: 'https://api.codetabs.com/v1/proxy?quest=' },  // ✅ TESTÉ: 48903 chaînes
                         { name: 'Thingproxy', url: 'https://thingproxy.freeboard.io/fetch/' }, // ✅ TESTÉ
-                        { name: 'AllOrigins', url: 'https://api.allorigins.win/raw?url=' },    // ✅ TESTÉ
+                        { name: 'AllOrigins', url: 'https://api.allorigins.win/get?url=' },    // ✅ TESTÉ (JSON wrapper)
                         { name: 'cors.eu.org', url: 'https://cors.eu.org/' }                  // Backup final
                     );
                     const proxyTimeoutMs = 15000; // Augmenté à 15s pour les gros fichiers
@@ -2402,6 +2402,17 @@
                             }
 
                             data = JSON.parse(text);
+
+                            // Spécial pour AllOrigins: déballer le contenu
+                            if (proxy.name === 'AllOrigins' && data.contents) {
+                                debugLog('📦 Déballage réponse AllOrigins...', 'info');
+                                try {
+                                    data = JSON.parse(data.contents);
+                                } catch (e) {
+                                    debugLog('❌ Erreur parsing contenu AllOrigins', 'error');
+                                    throw e;
+                                }
+                            }
 
                             // Vérifier si la réponse contient une erreur proxy
                             if (data && data.error && !Array.isArray(data)) {
