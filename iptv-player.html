@@ -771,10 +771,13 @@
                             clearInterval(checkAndCall);
                             console.error('❌ saveAndConnect() non trouvée après 20 tentatives');
                             console.error('Type:', typeof saveAndConnect);
-                            alert('ERREUR CRITIQUE: La fonction saveAndConnect n\'est pas disponible.\n\nVeuillez:\n1. Vider le
-                    cache(Ctrl + Shift + Del) \n2.Actualiser(Ctrl + F5) \n3.Si le problème persiste, ouvrez la Console(F12)
-                    et envoyez - moi les erreurs.');
-                    }
+                            const errorMsg = 'ERREUR CRITIQUE: La fonction saveAndConnect n\'est pas disponible.\n\n' +
+                                'Veuillez:\n' +
+                                '1. Vider le cache (Ctrl+Shift+Del)\n' +
+                                '2. Actualiser (Ctrl+F5)\n' +
+                                '3. Si le problème persiste, ouvrez la Console (F12) et envoyez-moi les erreurs.';
+                            alert(errorMsg);
+                        }
                     }, 100);
                 };
 
