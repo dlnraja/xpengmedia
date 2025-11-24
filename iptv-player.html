@@ -660,24 +660,6 @@
                 </select>
             </div>
 
-            <script>
-                // Event listener pour le changement de type de connexion
-                (function () {
-                    const selectType = document.getElementById('connectionType');
-                    if (selectType) {
-                        selectType.addEventListener('change', function () {
-                            console.log('📝 Type de connexion changé:', this.value);
-                            if (typeof updateFormFields === 'function') {
-                                updateFormFields();
-                            } else {
-                                console.error('❌ updateFormFields non disponible');
-                            }
-                        });
-                        console.log('✅ Event listener sur connectionType configuré');
-                    }
-                })();
-            </script>
-
             <div id="m3uFields" class="hidden">
                 <div class="form-group">
                     <label for="m3uUrl">URL de la playlist M3U :</label>
@@ -744,49 +726,6 @@
                 </button>
                 <button type="button" class="btn-secondary" onclick="clearStorage()">🗑️ Effacer les données</button>
             </div>
-
-            <script>
-                // Forcer l'événement click sur le bouton avec logs détaillés
-                document.addEventListener('DOMContentLoaded', function () {
-                    console.log('🔵 Script bouton - DOM chargé');
-
-                    const btn = document.getElementById('btnSaveAndConnect');
-                    if (btn) {
-                        btn.addEventListener('click', function (e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('═══════════════════════════════════════════');
-                            console.log('🔵 BOUTON CLIQUÉ !');
-                            console.log('═══════════════════════════════════════════');
-
-                            // Vérifier que la fonction existe
-                            if (typeof saveAndConnect === 'function') {
-                                console.log('✅ Fonction saveAndConnect trouvée');
-                                console.log('🚀 Lancement saveAndConnect()...');
-                                try {
-                                    saveAndConnect();
-                                    console.log('✅ saveAndConnect() exécutée');
-                                } catch (error) {
-                                    console.error('❌ ERREUR dans saveAndConnect():', error);
-                                    console.error('Stack:', error.stack);
-                                }
-                            } else {
-                                console.error('❌ Fonction saveAndConnect NON TROUVÉE !');
-                                console.error('typeof saveAndConnect:', typeof saveAndConnect);
-                            }
-                        });
-                        console.log('✅ Bouton Sauvegarder configuré avec listener');
-                    } else {
-                        console.error('❌ Bouton #btnSaveAndConnect introuvable !');
-                    }
-
-                    // Forcer updateFormFields au chargement
-                    console.log('🔄 Appel initial updateFormFields...');
-                    if (typeof updateFormFields === 'function') {
-                        updateFormFields();
-                    }
-                });
-            </script>
 
             <!-- Statut visible pendant la configuration -->
             <div id="setupStatus" class="status-message status-info" style="display:none; margin-top:16px;"></div>
@@ -1027,11 +966,64 @@
 
         // Charger la configuration sauvegardée au démarrage
         window.onload = function () {
+            console.log('🚀 Window.onload - Initialisation...');
+
+            // 1. Charger config sauvegardée
             loadSavedConfig();
             loadFavorites();
             loadHistory();
-            // Layout par défaut
+
+            // 2. Layout par défaut
             setLayout(currentLayout);
+
+            // 3. INITIALISER LE BOUTON SAUVEGARDER
+            console.log('🔵 Initialisation du bouton Sauvegarder...');
+            const btn = document.getElementById('btnSaveAndConnect');
+            if (btn) {
+                btn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('═══════════════════════════════════════════');
+                    console.log('🔵 BOUTON CLIQUÉ !');
+                    console.log('═══════════════════════════════════════════');
+
+                    if (typeof saveAndConnect === 'function') {
+                        console.log('✅ Fonction saveAndConnect trouvée');
+                        console.log('🚀 Lancement saveAndConnect()...');
+                        try {
+                            saveAndConnect();
+                            console.log('✅ saveAndConnect() exécutée');
+                        } catch (error) {
+                            console.error('❌ ERREUR dans saveAndConnect():', error);
+                            console.error('Stack:', error.stack);
+                        }
+                    } else {
+                        console.error('❌ Fonction saveAndConnect NON TROUVÉE !');
+                    }
+                });
+                console.log('✅ Bouton Sauvegarder configuré');
+            } else {
+                console.error('❌ Bouton #btnSaveAndConnect introuvable');
+            }
+
+            // 4. INITIALISER LE MENU DÉROULANT
+            console.log('📝 Initialisation du menu déroulant...');
+            const selectType = document.getElementById('connectionType');
+            if (selectType) {
+                selectType.addEventListener('change', function () {
+                    console.log('📝 Type de connexion changé:', this.value);
+                    updateFormFields();
+                });
+                console.log('✅ Event listener sur connectionType configuré');
+
+                // 5. Appeler updateFormFields initial pour afficher les bons champs
+                console.log('🔄 Appel initial updateFormFields...');
+                updateFormFields();
+            } else {
+                console.error('❌ Select #connectionType introuvable');
+            }
+
+            console.log('✅ Initialisation terminée');
         };
 
         let forceProxyMode = false;
