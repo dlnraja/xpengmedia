@@ -728,19 +728,44 @@
             </div>
 
             <script>
-                // Forcer l'événement click sur le bouton
+                // Forcer l'événement click sur le bouton avec logs détaillés
                 document.addEventListener('DOMContentLoaded', function () {
+                    console.log('🔵 Script bouton - DOM chargé');
+
                     const btn = document.getElementById('btnSaveAndConnect');
                     if (btn) {
                         btn.addEventListener('click', function (e) {
                             e.preventDefault();
                             e.stopPropagation();
-                            console.log('🔵 BOUTON CLIQUÉ - Lancement saveAndConnect()');
-                            saveAndConnect();
+                            console.log('═══════════════════════════════════════════');
+                            console.log('🔵 BOUTON CLIQUÉ !');
+                            console.log('═══════════════════════════════════════════');
+
+                            // Vérifier que la fonction existe
+                            if (typeof saveAndConnect === 'function') {
+                                console.log('✅ Fonction saveAndConnect trouvée');
+                                console.log('🚀 Lancement saveAndConnect()...');
+                                try {
+                                    saveAndConnect();
+                                    console.log('✅ saveAndConnect() exécutée');
+                                } catch (error) {
+                                    console.error('❌ ERREUR dans saveAndConnect():', error);
+                                    console.error('Stack:', error.stack);
+                                }
+                            } else {
+                                console.error('❌ Fonction saveAndConnect NON TROUVÉE !');
+                                console.error('typeof saveAndConnect:', typeof saveAndConnect);
+                            }
                         });
-                        console.log('✅ Bouton Sauvegarder configuré');
+                        console.log('✅ Bouton Sauvegarder configuré avec listener');
                     } else {
-                        console.error('❌ Bouton Sauvegarder introuvable');
+                        console.error('❌ Bouton #btnSaveAndConnect introuvable !');
+                    }
+
+                    // Forcer updateFormFields au chargement
+                    console.log('🔄 Appel initial updateFormFields...');
+                    if (typeof updateFormFields === 'function') {
+                        updateFormFields();
                     }
                 });
             </script>
@@ -1344,8 +1369,32 @@
 
         function updateFormFields() {
             const type = document.getElementById('connectionType').value;
-            document.getElementById('m3uFields').classList.toggle('hidden', type !== 'm3u');
-            document.getElementById('xtreamFields').classList.toggle('hidden', type !== 'xtream');
+            const m3uFields = document.getElementById('m3uFields');
+            const xtreamFields = document.getElementById('xtreamFields');
+
+            console.log('🔄 updateFormFields appelé - Type:', type);
+
+            if (type === 'm3u') {
+                // Afficher M3U, cacher Xtream
+                if (m3uFields) {
+                    m3uFields.classList.remove('hidden');
+                    console.log('✅ Champs M3U affichés');
+                }
+                if (xtreamFields) {
+                    xtreamFields.classList.add('hidden');
+                    console.log('✅ Champs Xtream cachés');
+                }
+            } else {
+                // Afficher Xtream, cacher M3U
+                if (m3uFields) {
+                    m3uFields.classList.add('hidden');
+                    console.log('✅ Champs M3U cachés');
+                }
+                if (xtreamFields) {
+                    xtreamFields.classList.remove('hidden');
+                    console.log('✅ Champs Xtream affichés');
+                }
+            }
         }
 
         // Fonction intelligente de nettoyage des URLs (erreurs copier-coller Android)
