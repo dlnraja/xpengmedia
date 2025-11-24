@@ -1552,7 +1552,8 @@
             return originalUrl;
         }
 
-        function saveAndConnect() {
+        // FONCTION GLOBALE pour être accessible par handleSaveAndConnect()
+        window.saveAndConnect = function () {
             // Réinitialiser le panneau de debug à chaque nouvelle tentative
             const panel = document.getElementById('setupDebugPanel');
             if (panel) {
