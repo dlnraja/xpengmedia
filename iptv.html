@@ -656,7 +656,7 @@
             <h2 style="margin-bottom: 20px;">📡 Configuration IPTV</h2>
             <p
                 style="color: #22c55e; font-weight: bold; margin-bottom: 20px; text-align: center; background: rgba(34, 197, 94, 0.1); padding: 10px; border-radius: 8px;">
-                ✅ VERSION CORRIGÉE (11:45) - Cache vidé ?
+                ✅ VERSION 13:00 - NOUVEAUX PROXIES
             </p>
 
             <div class="form-group">
@@ -2366,7 +2366,23 @@
                         try {
                             const isCachedProxy = cachedProxy && proxy.name === cachedProxy.proxy;
                             debugLog(`🌐 Test proxy: ${proxy.name}${isCachedProxy ? ' (mémorisé)' : ''}...`, 'info');
-                            const proxiedUrl = proxy.url + encodeURIComponent(apiUrl);
+                            // Construction de l'URL finale
+                            let proxiedUrl;
+                            if (proxy.isBackend) {
+                                // Les backends (Cloudflare/Vercel) attendent ?url=... (sauf si c'est corsproxy.io)
+                                proxiedUrl = proxy.url + encodeURIComponent(apiUrl);
+                            } else {
+                                // Les proxies publics ont des formats différents
+                                if (proxy.name === 'corsproxy.io') {
+                                    proxiedUrl = proxy.url + encodeURIComponent(apiUrl);
+                                } else if (proxy.name === 'Thingproxy') {
+                                    proxiedUrl = proxy.url + apiUrl; // Thingproxy n'aime pas toujours l'encodage
+                                } else {
+                                    proxiedUrl = proxy.url + encodeURIComponent(apiUrl);
+                                }
+                            }
+
+                            debugLog(`🔗 URL complète: ${proxiedUrl}`, 'info');
 
                             const proxyFetchWithTimeout = (url, options, timeout = proxyTimeoutMs) => {
                                 return Promise.race([
@@ -2377,6 +2393,7 @@
                                 ]);
                             };
 
+                            const startTime = Date.now();
                             response = await proxyFetchWithTimeout(proxiedUrl, {
                                 method: 'GET',
                                 headers: { 'Accept': 'application/json' }
@@ -2457,6 +2474,10 @@
                         debugLog(`   1️⃣ Utilise le player directement depuis http:// (pas https://)`, 'info');
                         debugLog(`   2️⃣ Installe une extension CORS dans ton navigateur`, 'info');
                         debugLog(`   3️⃣ Demande à ton fournisseur IPTV s'il a une URL avec CORS activé`, 'info');
+
+                        showStatus(`❌ Erreur Xtream: Tous les proxies ont échoué. <br><a href="${apiUrl}" target="_blank" style="color: #fff; text-decoration: underline; font-weight: bold;">👉 CLIQUEZ ICI POUR TESTER LE LIEN DIRECT</a>`, 'error');
+
+                        debugLog(`❌ ERREUR FATALE après ${Date.now() - startTime}ms`, 'error');
                         throw new Error(`Tous les proxies ont échoué. Dernier: ${lastProxyError}. Le serveur IPTV nécessite probablement un accès direct (pas via proxy). Essaie d'ouvrir le player en HTTP au lieu de HTTPS, ou demande à ton fournisseur IPTV une URL compatible avec les navigateurs web.`);
                     }
                 }
