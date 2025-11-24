@@ -654,13 +654,13 @@
 
             <div class="form-group">
                 <label for="connectionType">Type de connexion :</label>
-                <select id="connectionType">
-                    <option value="m3u">URL M3U/M3U8</option>
-                    <option value="xtream" selected>Xtream Codes API ⭐</option>
+                <select id="connectionType" onchange="toggleConnectionFields()">
+                    <option value="m3u" selected>URL M3U/M3U8 ⭐</option>
+                    <option value="xtream">Xtream Codes API</option>
                 </select>
             </div>
 
-            <div id="m3uFields" class="hidden">
+            <div id="m3uFields">
                 <div class="form-group">
                     <label for="m3uUrl">URL de la playlist M3U :</label>
                     <input type="url" id="m3uUrl" placeholder="https://example.com/playlist.m3u8">
@@ -700,7 +700,7 @@
                 </div>
             </div>
 
-            <div id="xtreamFields">
+            <div id="xtreamFields" class="hidden">
                 <div class="form-group">
                     <label for="xtreamUrl">URL du serveur :</label>
                     <input type="url" id="xtreamUrl" placeholder="http://server.com:port">
@@ -720,12 +720,54 @@
 
 
             <div style="display: flex; gap: 12px; margin-top: 20px;">
-                <button id="btnSaveAndConnect" type="button"
+                <button type="button" onclick="handleSaveAndConnect()" class="btn-primary"
                     style="background: linear-gradient(135deg, #06b6d4, #3b82f6); color: white; padding: 14px 28px; font-size: 16px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; flex: 1;">
                     💾 Sauvegarder et Charger
                 </button>
                 <button type="button" class="btn-secondary" onclick="clearStorage()">🗑️ Effacer les données</button>
             </div>
+
+            <script>
+                // Fonction simple pour gérer le changement de champs
+                function toggleConnectionFields() {
+                    const type = document.getElementById('connectionType').value;
+                    const m3uFields = document.getElementById('m3uFields');
+                    const xtreamFields = document.getElementById('xtreamFields');
+
+                    console.log('🔄 Toggle fields - Type:', type);
+
+                    if (type === 'm3u') {
+                        m3uFields.style.display = 'block';
+                        xtreamFields.style.display = 'none';
+                        m3uFields.classList.remove('hidden');
+                        xtreamFields.classList.add('hidden');
+                        console.log('✅ M3U visible, Xtream caché');
+                    } else {
+                        m3uFields.style.display = 'none';
+                        xtreamFields.style.display = 'block';
+                        m3uFields.classList.add('hidden');
+                        xtreamFields.classList.remove('hidden');
+                        console.log('✅ Xtream visible, M3U caché');
+                    }
+                }
+
+                // Fonction simple pour le bouton
+                function handleSaveAndConnect() {
+                    console.log('═══════════════════════════════════════════');
+                    console.log('🔵 BOUTON CLIQUÉ - handleSaveAndConnect()');
+                    console.log('═══════════════════════════════════════════');
+
+                    if (typeof saveAndConnect === 'function') {
+                        saveAndConnect();
+                    } else {
+                        console.error('❌ saveAndConnect() non trouvée');
+                        alert('Erreur: La fonction saveAndConnect n\'est pas disponible');
+                    }
+                }
+
+                // Appeler au chargement
+                toggleConnectionFields();
+            </script>
 
             <!-- Statut visible pendant la configuration -->
             <div id="setupStatus" class="status-message status-info" style="display:none; margin-top:16px;"></div>
