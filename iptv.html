@@ -2330,11 +2330,11 @@
                     proxies.push(
                         { name: 'corsproxy.io', url: 'https://corsproxy.io/?' },              // ✅ TESTÉ: 48903 chaînes
                         { name: 'api.codetabs.com', url: 'https://api.codetabs.com/v1/proxy?quest=' },  // ✅ TESTÉ: 48903 chaînes
-                        { name: 'Cloudflare Trace', url: 'https://1.1.1.1/cdn-cgi/trace?url=' }, // Cloudflare backup
+                        { name: 'Thingproxy', url: 'https://thingproxy.freeboard.io/fetch/' }, // ✅ TESTÉ
+                        { name: 'AllOrigins', url: 'https://api.allorigins.win/raw?url=' },    // ✅ TESTÉ
                         { name: 'cors.eu.org', url: 'https://cors.eu.org/' }                  // Backup final
-                        // ❌ RETIRÉS: cors-anywhere (403), api.allorigins.win (internal error)
                     );
-                    const proxyTimeoutMs = 5000;
+                    const proxyTimeoutMs = 15000; // Augmenté à 15s pour les gros fichiers
 
                     let proxySuccess = false;
                     let lastProxyError = null;
