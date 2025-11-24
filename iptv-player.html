@@ -1658,21 +1658,31 @@
         function loadSavedConfig() {
             const saved = localStorage.getItem('iptvConfig');
             if (saved) {
+                console.log('📦 Configuration sauvegardée trouvée');
                 const config = JSON.parse(saved);
-                document.getElementById('connectionType').value = config.type;
-                updateFormFields();
 
+                // NE PAS forcer le type, garder M3U par défaut
+                // Seulement pré-remplir les champs
                 if (config.type === 'm3u') {
-                    document.getElementById('m3uUrl').value = config.url;
-                } else {
-                    document.getElementById('xtreamUrl').value = config.url;
-                    document.getElementById('xtreamUsername').value = config.username;
-                    document.getElementById('xtreamPassword').value = config.password;
+                    document.getElementById('connectionType').value = 'm3u';
+                    document.getElementById('m3uUrl').value = config.url || '';
+                } else if (config.type === 'xtream') {
+                    // Ne PAS auto-sélectionner Xtream, juste pré-remplir
+                    document.getElementById('xtreamUrl').value = config.url || '';
+                    document.getElementById('xtreamUsername').value = config.username || '';
+                    document.getElementById('xtreamPassword').value = config.password || '';
                 }
 
-                // Auto-charger les chaînes
-                showStatus('🔄 Chargement de la configuration sauvegardée...', 'success');
-                setTimeout(() => loadChannels(config), 500);
+                // Appeler toggleConnectionFields pour mettre à jour l'affichage
+                if (typeof toggleConnectionFields === 'function') {
+                    toggleConnectionFields();
+                }
+
+                // NE PAS auto-charger les chaînes
+                console.log('✅ Champs pré-remplis depuis la config sauvegardée');
+                console.log('ℹ️  Cliquez sur "Sauvegarder et Charger" pour charger les chaînes');
+            } else {
+                console.log('ℹ️  Aucune configuration sauvegardée');
             }
         }
 
