@@ -2298,9 +2298,13 @@
 
                     // 1️⃣ Cloudflare Worker (le plus rapide)
                     if (CLOUDFLARE_PROXY) {
+                        let proxyUrl = CLOUDFLARE_PROXY;
+                        if (!proxyUrl.includes('corsproxy.io')) {
+                            proxyUrl += '?url=';
+                        }
                         proxies.push({
                             name: 'Cloudflare Worker',
-                            url: CLOUDFLARE_PROXY + '?url=',
+                            url: proxyUrl,
                             isBackend: true
                         });
                         debugLog(`⚡ Cloudflare Worker configuré (priorité 1)`, 'info');
@@ -2308,9 +2312,13 @@
 
                     // 2️⃣ Vercel Edge (très rapide)
                     if (VERCEL_PROXY) {
+                        let proxyUrl = VERCEL_PROXY;
+                        if (!proxyUrl.includes('corsproxy.io')) {
+                            proxyUrl += '?url=';
+                        }
                         proxies.push({
                             name: 'Vercel Edge',
-                            url: VERCEL_PROXY + '?url=',
+                            url: proxyUrl,
                             isBackend: true
                         });
                         debugLog(`⚡ Vercel Edge configuré (priorité 2)`, 'info');
@@ -2318,9 +2326,13 @@
 
                     // 3️⃣ Netlify Functions (rapide)
                     if (NETLIFY_PROXY) {
+                        let proxyUrl = NETLIFY_PROXY;
+                        if (!proxyUrl.includes('corsproxy.io')) {
+                            proxyUrl += '?url=';
+                        }
                         proxies.push({
                             name: 'Netlify Functions',
-                            url: NETLIFY_PROXY + '?url=',
+                            url: proxyUrl,
                             isBackend: true
                         });
                         debugLog(`⚡ Netlify Functions configuré (priorité 3)`, 'info');
