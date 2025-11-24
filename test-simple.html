@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Isolé - M3U/Xtream</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1e293b;
+            color: white;
+        }
+
+        select,
+        input,
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        input {
+            background: #334155;
+            color: white;
+        }
+
+        button {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #log {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            word-wrap: break-word;
+        }
+
+        .log-line {
+            margin: 3px 0;
+            padding: 3px;
+            border-left: 3px solid #3b82f6;
+            padding-left: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🧪 Test Isolé</h1>
+    <p>Version:
+        <?php echo date('Y-m-d H:i:s'); ?>
+    </p>
+
+    <label>Type de connexion:</label>
+    <select id="connectionType" onchange="toggleFields()">
+        <option value="m3u" selected>M3U ⭐</option>
+        <option value="xtream">Xtream</option>
+    </select>
+
+    <div id="m3uFields">
+        <input type="text" placeholder="URL M3U" id="m3uUrl">
+    </div>
+
+    <div id="xtreamFields" class="hidden">
+        <input type="text" placeholder="URL Serveur" id="xtreamUrl">
+        <input type="text" placeholder="Username" id="xtreamUser">
+        <input type="password" placeholder="Password" id="xtreamPass">
+    </div>
+
+    <button onclick="testSave()">💾 TESTER SAUVEGARDE</button>
+
+    <div id="log"></div>
+
+    <script>
+        function log(msg) {
+            const logDiv = document.getElementById('log');
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.textContent = new Date().toLocaleTimeString() + ' - ' + msg;
+            logDiv.appendChild(line);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(msg);
+        }
+
+        function toggleFields() {
+            const type = document.getElementById('connectionType').value;
+            const m3u = document.getElementById('m3uFields');
+            const xtream = document.getElementById('xtreamFields');
+
+            log('🔄 Toggle vers: ' + type);
+
+            if (type === 'm3u') {
+                m3u.classList.remove('hidden');
+                xtream.classList.add('hidden');
+                log('✅ M3U visible, Xtream caché');
+            } else {
+                m3u.classList.add('hidden');
+                xtream.classList.remove('hidden');
+                log('✅ Xtream visible, M3U caché');
+            }
+        }
+
+        function testSave() {
+            log('═══════════════════════════════════');
+            log('🔵 BOUTON CLIQUÉ !');
+            log('═══════════════════════════════════');
+
+            const type = document.getElementById('connectionType').value;
+            log('Type actuel: ' + type);
+
+            if (type === 'm3u') {
+                const url = document.getElementById('m3uUrl').value;
+                log('M3U URL: ' + (url || '[vide]'));
+                if (!url) {
+                    alert('Veuillez entrer une URL M3U');
+                    return;
+                }
+            } else {
+                const url = document.getElementById('xtreamUrl').value;
+                const user = document.getElementById('xtreamUser').value;
+                const pass = document.getElementById('xtreamPass').value;
+                log('Xtream URL: ' + (url || '[vide]'));
+                log('Xtream User: ' + (user || '[vide]'));
+                log('Xtream Pass: ' + (pass ? '***' : '[vide]'));
+
+                if (!url || !user || !pass) {
+                    alert('Veuillez remplir tous les champs Xtream');
+                    return;
+                }
+            }
+
+            log('✅ VALIDATION OK !');
+            alert('✅ Fonction OK ! Les champs sont remplis correctement.');
+        }
+
+        // Init
+        log('🚀 Page chargée');
+        toggleFields();
+    </script>
+</body>
+
+</html>
