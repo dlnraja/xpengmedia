@@ -654,11 +654,29 @@
 
             <div class="form-group">
                 <label for="connectionType">Type de connexion :</label>
-                <select id="connectionType" onchange="updateFormFields()">
+                <select id="connectionType">
                     <option value="m3u">URL M3U/M3U8</option>
                     <option value="xtream" selected>Xtream Codes API ⭐</option>
                 </select>
             </div>
+
+            <script>
+                // Event listener pour le changement de type de connexion
+                (function () {
+                    const selectType = document.getElementById('connectionType');
+                    if (selectType) {
+                        selectType.addEventListener('change', function () {
+                            console.log('📝 Type de connexion changé:', this.value);
+                            if (typeof updateFormFields === 'function') {
+                                updateFormFields();
+                            } else {
+                                console.error('❌ updateFormFields non disponible');
+                            }
+                        });
+                        console.log('✅ Event listener sur connectionType configuré');
+                    }
+                })();
+            </script>
 
             <div id="m3uFields" class="hidden">
                 <div class="form-group">
