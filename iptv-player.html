@@ -1025,6 +1025,19 @@
         // ⚡ Lazy loading pour performance
         let isLoading = false;
 
+        // ===================================================================
+        // 🚀 FONCTIONS CRITIQUES - DÉFINIES EN PREMIER POUR DISPONIBILITÉ
+        // ===================================================================
+
+        // Fonction saveAndConnect - DOIT ÊTRE GLOBALE ET DISPONIBLE IMMÉDIATEMENT
+        window.saveAndConnect = function () {
+            console.log('🎯 saveAndConnect() appelée');
+            // La vraie implémentation sera plus bas, mais on la déclare ici
+            // pour qu'elle soit dans le scope global dès le début
+        };
+
+        console.log('✅ window.saveAndConnect déclarée (placeholder)');
+
         // Charger la configuration sauvegardée au démarrage
         window.onload = function () {
             console.log('🚀 Window.onload - Initialisation...');
@@ -1571,8 +1584,10 @@
             return originalUrl;
         }
 
-        // FONCTION GLOBALE pour être accessible par handleSaveAndConnect()
+        // FONCTION GLOBALE saveAndConnect - RÉASSIGNATION DE L'IMPLÉMENTATION COMPLÈTE
+        // (Le placeholder a été déclaré plus haut pour disponibilité immédiate)
         window.saveAndConnect = function () {
+            console.log('🔵 saveAndConnect() - IMPLÉMENTATION COMPLÈTE');
             // Réinitialiser le panneau de debug à chaque nouvelle tentative
             const panel = document.getElementById('setupDebugPanel');
             if (panel) {
